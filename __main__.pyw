@@ -1,6 +1,3 @@
-
-
-
 def main():
     from __init__ import app
     app = app()
