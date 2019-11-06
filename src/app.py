@@ -283,10 +283,10 @@ class app():
             # Output checkbox options
             xpadl = 200
             self.opt_csv = tk.IntVar(value=1)
-            ttk.Checkbutton(self.root, text="Tabular", variable=self.opt_csv, style='BW.TCheckbutton').grid(row=self.row, column=1, padx=(xpadl,0), pady=0, sticky=W)
+            ttk.Checkbutton(self.root, text="CSV", variable=self.opt_csv, style='BW.TCheckbutton').grid(row=self.row, column=1, padx=(xpadl,0), pady=0, sticky=W)
             self.row += 1
             self.opt_shp = tk.IntVar(value=1)
-            ttk.Checkbutton(self.root, text="Spatial", variable=self.opt_shp, style='BW.TCheckbutton').grid(row=self.row, column=1, padx=(xpadl,0), pady=0, sticky=W)
+            ttk.Checkbutton(self.root, text="Shapefile", variable=self.opt_shp, style='BW.TCheckbutton').grid(row=self.row, column=1, padx=(xpadl,0), pady=0, sticky=W)
             self.row += 1
             self.opt_report = tk.IntVar(value=1)
             ttk.Checkbutton(self.root, text="Report", variable=self.opt_report, style='BW.TCheckbutton').grid(row=self.row, column=1, padx=(xpadl,0), pady=0, sticky=W)

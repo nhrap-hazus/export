@@ -35,6 +35,11 @@ def install():
             except:
                 messageBox(None,"An error occured. The Hazus Python package was not installed. Please check your network settings and try again.","Hazus", 0)
 
+def upgrade():
+    call('echo y | pip uninstall hazus', shell=True)
+    call('echo y | pip install hazus', shell=True)
+
+
 """
 conda config --remove channels anaconda
 conda config --remove channels conda-forge
