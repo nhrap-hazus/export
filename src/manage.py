@@ -8,7 +8,7 @@ def setProxyEnv():
     newEnv["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
     return newEnv
 
-def install():
+def installHazus():
     output = check_output('conda list')
     packages = list(map(lambda x: x.split(' ')[0], str(output).split('\\r\\n')))
     if not 'hazus' in packages:

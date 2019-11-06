@@ -3,8 +3,8 @@ import sys
 try:
     from hazus.legacy import Exporting, getStudyRegions
 except:
-    from src import manageHazus
-    manageHazus.install()
+    from src import manage
+    manage.installHazus()
 import pyodbc as py
 import os
 import tkinter as tk
