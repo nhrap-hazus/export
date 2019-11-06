@@ -1,6 +1,10 @@
 import ctypes
 import sys
-from hazus.legacy import Exporting, getStudyRegions
+try:
+    from hazus.legacy import Exporting, getStudyRegions
+except:
+    from src import manageHazus
+    manageHazus.install()
 import pyodbc as py
 import os
 import tkinter as tk

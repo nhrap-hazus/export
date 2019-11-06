@@ -1,3 +1,3 @@
 @echo off
-python __main__.pyw
-exit 0
+start /min python __main__.py
+REM exit 0
