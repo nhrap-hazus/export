@@ -29,9 +29,14 @@ def installHazus():
             ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 1)
             print('Installing Hazus, please wait...')
             try:
-                proxyEnv = setProxyEnv()
-                check_call('echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
-                messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
+                try:
+                    check_call('echo y | conda install -c nhrap hazus', shell=True)
+                    messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
+                except:
+                    print('Adding proxies and retrying...')
+                    proxyEnv = setProxyEnv()
+                    check_call('echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
+                    messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
             except:
                 messageBox(None,"An error occured. The Hazus Python package was not installed. Please check your network settings and try again.","Hazus", 0)
 
