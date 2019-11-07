@@ -1,4 +1,4 @@
-# hazus_export_report
+# Hazus Export Utility
 
 The Hazus Export Utility summarizes Hazus risk assessment results stored on your desktop Hazus database in a handful of text files, shapefiles, and a one-page graphic report. Launch the tool by double-clicking the hazus-export-utility.bat file in the download folder.
 
