@@ -14,7 +14,7 @@ The Hazus Export Utility summarizes Hazus risk assessment results stored on your
 
 5. Name the report file - you will be able to change the report title later
 
-6. Type any notes about your Hazus model run in the Metadata/Notes section - these are required for sharing your data later!
+6. Type important notes about your Hazus model run (inputs, date, settings, version, etc.) in the Metadata/Notes section - these are       required for sharing your data later!
 
 7. Select the types of summaries you want - text files, shape files, a pdf report, and/or a json file
 
