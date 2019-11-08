@@ -22,7 +22,7 @@ The Hazus Export Utility summarizes Hazus risk assessment results stored on your
 
 ## Requirements
 
-The Hazus utiltiies use the Hazus Python package under the hood to run everything. We recommend an installation of Anaconda and the utilities will handle the requirements for you.
+The Hazus open-source utilities use the Hazus Python package under the hood to run everything. You will need an installation of Anaconda that will automatically manage the Hazus Python package and other requirements necessart to run the utility.
 
 1. Go to https://www.anaconda.com/distribution/
 
