@@ -1,5 +1,5 @@
 def main():
-    from __init__ import app
+    from src import app
     app = app()
     app.run_app()
     
