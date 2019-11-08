@@ -30,8 +30,8 @@ The Hazus open-source utilities use the Hazus Python package under the hood to r
 
 3. Complete the installation. During installation, make sure the following options are checked:
 
-    [x] Add Anaconda to my PATH environment variable
-    [x] Register Anaconda as my default Python
+    - [x] Add Anaconda to my PATH environment variable
+    - [x] Register Anaconda as my default Python
 
 ## Contact
 
