@@ -325,5 +325,9 @@ class app():
             
     # Run app
     def run_app(self):
-        self.build_gui()
-        self.root.mainloop()
+        try:
+            self.build_gui()
+            self.root.mainloop()
+        except:
+            from src import manage
+            manage.update()

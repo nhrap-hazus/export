@@ -8,6 +8,17 @@ def setProxyEnv():
     newEnv["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
     return newEnv
 
+def condaInstallHazus():
+    messageBox = ctypes.windll.user32.MessageBoxW
+    try:
+        check_call('echo y | conda install -c nhrap hazus', shell=True)
+        messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
+    except:
+        print('Adding proxies and retrying...')
+        proxyEnv = setProxyEnv()
+        check_call('echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
+        messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
+
 def installHazus():
     output = check_output('conda list')
     packages = list(map(lambda x: x.split(' ')[0], str(output).split('\\r\\n')))
@@ -29,20 +40,15 @@ def installHazus():
             ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 1)
             print('Installing Hazus, please wait...')
             try:
-                try:
-                    check_call('echo y | conda install -c nhrap hazus', shell=True)
-                    messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
-                except:
-                    print('Adding proxies and retrying...')
-                    proxyEnv = setProxyEnv()
-                    check_call('echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
-                    messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
+                condaInstallHazus()
             except:
                 messageBox(None,"An error occured. The Hazus Python package was not installed. Please check your network settings and try again.","Hazus", 0)
 
-def upgrade():
-    call('echo y | pip uninstall hazus', shell=True)
-    call('echo y | pip install hazus', shell=True)
+def update():
+    messageBox = ctypes.windll.user32.MessageBoxW
+    returnValue = messageBox(None,"This utility was unable to open. Would you like to check for updates to the Hazus Python package?\n\nIf this problem persists, try downloading the most recent version of the utility.","Hazus",0x40 | 0x1)
+    if returnValue == 1:
+        condaInstallHazus()
 
 
 """
