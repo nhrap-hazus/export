@@ -33,6 +33,10 @@ The Hazus open-source utilities use the Hazus Python package under the hood to r
     - [x] Add Anaconda to my PATH environment variable
     - [x] Register Anaconda as my default Python
 
+## Documentation
+
+Please refer to the files "EQDataDictionary", "TSDataDictionary", "FLDataDictionary", and "HUDataDictionary" for detailed information about the fields, values and units found in exported Hazus results data.
+
 ## Contact
 
 Issues can be reported through the repository on Github (https://github.com/nhrap-hazus)
