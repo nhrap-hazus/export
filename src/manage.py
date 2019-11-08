@@ -38,7 +38,7 @@ def installHazus():
                 call('conda config --add channels conda-forge')
                 print('conda-forge channel added')
             ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 1)
-            print('Installing Hazus, please wait...')
+            print('Installing the Hazus Python package, please wait...')
             try:
                 condaInstallHazus()
             except:

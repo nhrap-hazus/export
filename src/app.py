@@ -5,6 +5,7 @@ try:
 except:
     from src import manage
     manage.installHazus()
+    installAttempted = True
 import pyodbc as py
 import os
 import tkinter as tk
@@ -329,5 +330,8 @@ class app():
             self.build_gui()
             self.root.mainloop()
         except:
-            from src import manage
-            manage.update()
+            if not installAttempted:
+                from src import manage
+                manage.update()
+            else:
+                pass

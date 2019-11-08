@@ -20,6 +20,20 @@ The Hazus Export Utility summarizes Hazus risk assessment results stored on your
 
 8. Select a folder location for exports and the report
 
+## Requirements
+
+The Hazus utiltiies use the Hazus Python package under the hood to run everything. We recommend an installation of Anaconda and the utilities will handle the requirements for you.
+
+1. Go to https://www.anaconda.com/distribution/
+
+2. Download Anaconda for Python 3
+
+3. Complete the installation. During installation, make sure the following options are checked:
+
+    a. Add Anaconda to my PATH environment variable
+
+    b. Register Anaconda as my default Python
+
 ## Contact
 
 Issues can be reported through the repository on Github (https://github.com/nhrap-hazus)
