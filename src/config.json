@@ -1,0 +1,31 @@
+{
+    "activeThemeId": 0,
+    "themes": { 
+        "light": { 
+            "themeId": 0,
+            "style": {
+                "backgroundColor": "#fff",
+                "foregroundColor": "#000",
+                "hoverColor": "#f8f8f8",
+                "fontColor": "#303030",
+                "textEntryColor": "#fff",
+                "textBorderColor": "#808080",
+                "textHighlightColor": "#1a73ea",
+                "starColor": "red"
+            }
+        },
+        "dark": { 
+            "themeId": 1,
+            "style": {
+                "backgroundColor": "#282a36",
+                "foregroundColor": "#fff",
+                "hoverColor": "#44475a",
+                "fontColor": "#fff",
+                "textEntryColor": "#fff",
+                "textBorderColor": "#fff",
+                "textHighlightColor": "#fff",
+                "starColor": "red"
+            }
+        }
+    }
+}

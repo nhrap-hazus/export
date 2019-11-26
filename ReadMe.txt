@@ -32,7 +32,7 @@ The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be install
 
     - [x] Add Anaconda to my PATH environment variable
     - [x] Register Anaconda as my default Python
-    - [x] **Install Anaconda for local user, rather than all users**
+    - [x] Install Anaconda for local user, rather than all users
 
 ## Documentation
 
