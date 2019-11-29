@@ -1,4 +1,4 @@
-# Hazus Export Utility
+# Hazus Export Tool
 
 The Hazus Export Utility summarizes Hazus risk assessment results stored on your desktop Hazus database in a handful of text files, shapefiles, and a one-page graphic report. Launch the tool by double-clicking the hazus-export-utility.bat file in the download folder.
 
@@ -22,7 +22,7 @@ The Hazus Export Utility summarizes Hazus risk assessment results stored on your
 
 ## Requirements
 
-The Hazus open-source utilities use the Hazus Python package under the hood to run everything. You will need an installation of Anaconda that will automatically manage the Hazus Python package and other requirements necessart to run the utility.
+The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be installed on your computer. Anaconda is a free software that automatically manages all Python packages required to run Hazus open source utilities - including the Hazus Python package: https://fema-nhrap.s3.amazonaws.com/Hazus/Python/build/html/index.html
 
 1. Go to https://www.anaconda.com/distribution/
 
@@ -32,6 +32,11 @@ The Hazus open-source utilities use the Hazus Python package under the hood to r
 
     - [x] Add Anaconda to my PATH environment variable
     - [x] Register Anaconda as my default Python
+    - [x] **Install Anaconda for local user, rather than all users**
+
+## Documentation
+
+Please refer to the files "EQDataDictionary", "TSDataDictionary", "FLDataDictionary", and "HUDataDictionary" for detailed information about the fields, values and units found in exported Hazus results data.
 
 ## Contact
 
