@@ -27,5 +27,6 @@
                 "starColor": "red"
             }
         }
-    }
+    },
+    "hazusVersion": "0.0.7"
 }
