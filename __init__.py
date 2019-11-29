@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    hazus
+    hazus export tool
     ~~~~~
 
-    FEMA developed module for analzying risk and loss from natural hazards.
+    UI to export Reports, CSVs, Shapefiles, and Json from Hazus Legacy.
 
     :copyright: © 2019 by FEMA's Natural Hazards and Risk Assesment Program.
     :license: cc, see LICENSE for more details.
