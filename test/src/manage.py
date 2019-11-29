@@ -2,11 +2,6 @@ from subprocess import check_output, check_call, call, Popen
 import os
 import ctypes
 import sys
-import requests
-import pkg_resources
-import json
-with open('./src/config.json') as configFile:
-    config = json.load(configFile)
 
 def setProxyEnv():
     newEnv = os.environ.copy()
@@ -52,15 +47,23 @@ def update():
         condaInstallHazus()
 
 def checkForHazusUpdates():
+    import requests
+    import pkg_resources
     try:
         installedVersion = pkg_resources.get_distribution('hazus').version
+        url = 'https://raw.githubusercontent.com/nhrap-dev/hazus/master/hazus/__init__.py'
         try:
-            req = requests.get(config['hazusInitUrl'], timeout=0.5)
+            req = requests.get(url, timeout=0.5)
         except:
             os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
             os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
             req = requests.get(url, timeout=0.5)
-        newestVersion = parseVersionFromInit(req.text)
+        reqList = req.text.split('\n')
+        newestVersion = list(filter(lambda x: '__version__' in x, reqList))[0]
+        replaceList = ['__version__', '=', "'", '"']
+        for i in replaceList:
+            newestVersion = newestVersion.replace(i, '')
+        newestVersion = newestVersion.strip()
         if newestVersion != installedVersion:
             update()
         else:
@@ -68,49 +71,6 @@ def checkForHazusUpdates():
     except:
         installHazus()
 
-def checkForToolUpdates():
-    try:
-        with open('__init__.py') as init:
-            text = init.readlines()
-            textBlob = ''.join(text)
-            installedVersion = parseVersionFromInit(textBlob)
-        try:
-            req = requests.get(config['initUrl'], timeout=0.5)
-        except:
-            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            req = requests.get(url, timeout=0.5)
-        newestVersion = parseVersionFromInit(req.text)
-        if newestVersion != installedVersion:
-            updateTool()
-        else:
-            print('Tool is up to date')
-    except:
-        print('Something broke')
-
-def updateTool():
-    from distutils.dir_util import copy_tree
-    from shutil import rmtree
-    from io import BytesIO
-    from zipfile import ZipFile
-    r = requests.get(config['repoUrl'])
-    z = ZipFile(io.BytesIO(r.content))
-    os.getcwd()
-    z.extractall()
-    fromDirectory  = z.namelist()[0]
-    toDirectory = './'
-    copy_tree(fromDirectory, toDirectory)
-    rmtree(fromDirectory)
-
-
-def parseVersionFromInit(textBlob):
-    reqList = textBlob.split('\n')
-    version = list(filter(lambda x: '__version__' in x, reqList))[0]
-    replaceList = ['__version__', '=', "'", '"']
-    for i in replaceList:
-        version = version.replace(i, '')
-    version = version.strip()
-    return version
 
 
 
