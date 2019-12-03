@@ -94,7 +94,7 @@ def updateTool():
     from io import BytesIO
     from zipfile import ZipFile
     r = requests.get(config['repoUrl'])
-    z = ZipFile(io.BytesIO(r.content))
+    z = ZipFile(BytesIO(r.content))
     os.getcwd()
     z.extractall()
     fromDirectory  = z.namelist()[0]
