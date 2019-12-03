@@ -1,11 +1,9 @@
+from src import manage
+if manage.internetConnected():
+    manage.checkForHazusUpdates()
 import ctypes
 import sys
-try:
-    from hazus.legacy import Exporting, getStudyRegions
-except:
-    from src import manage
-    manage.installHazus()
-    installAttempted = True
+from hazus.legacy import Exporting, getStudyRegions
 import pyodbc as py
 import os
 import tkinter as tk
@@ -330,8 +328,4 @@ class app():
             self.build_gui()
             self.root.mainloop()
         except:
-            if not installAttempted:
-                from src import manage
-                manage.update()
-            else:
-                pass
+            manage.installHazus()

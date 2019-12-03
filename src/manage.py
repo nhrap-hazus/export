@@ -112,7 +112,17 @@ def parseVersionFromInit(textBlob):
     version = version.strip()
     return version
 
-
+def internetConnected():
+    try: 
+        try:
+            requests.get('http://google.com', timeout=0.2)
+        except:
+            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            requests.get('http://google.com', timeout=0.2)
+        return True
+    except:
+        return False
 
 
 """
