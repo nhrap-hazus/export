@@ -30,5 +30,5 @@
     },
     "hazusInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/hazus/master/hazus/__init__.py",
     "repoUrl": "https://github.com/nhrap-hazus/export/archive/master.zip",
-    "initUrl": "https://raw.githubusercontent.com/nhrap-dev/export/master/__init__.py"
+    "initUrl": "https://raw.githubusercontent.com/nhrap-hazus/export/master/__init__.py"
 }
