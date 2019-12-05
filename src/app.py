@@ -1,5 +1,7 @@
 from src import manage
-manage.checkForHazusUpdates()
+if manage.internetConnected():
+    manage.checkForHazusUpdates()
+    manage.checkForToolUpdates()
 import ctypes
 import sys
 from hazus.legacy import Exporting, getStudyRegions
