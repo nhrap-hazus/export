@@ -78,11 +78,11 @@ def checkForToolUpdates():
             textBlob = ''.join(text)
             installedVersion = parseVersionFromInit(textBlob)
         try:
-            req = requests.get(config['initUrl'], timeout=0.3)
+            req = requests.get(config['toolInitUrl'], timeout=0.3)
         except:
             os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
             os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            req = requests.get(config['initUrl'], timeout=0.3)
+            req = requests.get(config['toolInitUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
             messageBox = ctypes.windll.user32.MessageBoxW
@@ -99,7 +99,7 @@ def updateTool():
     from shutil import rmtree
     from io import BytesIO
     from zipfile import ZipFile
-    r = requests.get(config['repoUrl'])
+    r = requests.get(config['repoZipfileUrl'])
     z = ZipFile(BytesIO(r.content))
     os.getcwd()
     z.extractall()
