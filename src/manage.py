@@ -27,7 +27,7 @@ def condaInstallHazus():
 
 def installHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
-    returnValue = messageBox(None,"The Hazus Python package is required to run this tool. Would you like to install it now?","Hazus",0x40 | 0x1)
+    returnValue = messageBox(None,"The Hazus Python package is required to run this tool. Would you like to install it now?","Hazus",0x40 | 0x4)
     if returnValue == 1:
         import os
         output = check_output('conda config --show channels')
@@ -47,7 +47,7 @@ def installHazus():
 
 def update():
     messageBox = ctypes.windll.user32.MessageBoxW
-    returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x1)
+    returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x4)
     if returnValue == 1:
         condaInstallHazus()
 
@@ -55,14 +55,17 @@ def checkForHazusUpdates():
     try:
         installedVersion = pkg_resources.get_distribution('hazus').version
         try:
-            req = requests.get(config['hazusInitUrl'], timeout=0.5)
+            req = requests.get(config['hazusInitUrl'], timeout=0.3)
         except:
             os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
             os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            req = requests.get(config['hazusInitUrl'], timeout=0.5)
+            req = requests.get(config['hazusInitUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            update()
+            messageBox = ctypes.windll.user32.MessageBoxW
+            returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x4)
+            if returnValue == 1:
+                update()
         else:
             print('Hazus is up to date')
     except:
@@ -75,14 +78,17 @@ def checkForToolUpdates():
             textBlob = ''.join(text)
             installedVersion = parseVersionFromInit(textBlob)
         try:
-            req = requests.get(config['initUrl'], timeout=0.5)
+            req = requests.get(config['initUrl'], timeout=0.3)
         except:
             os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
             os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            req = requests.get(url, timeout=0.5)
+            req = requests.get(config['initUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            updateTool()
+            messageBox = ctypes.windll.user32.MessageBoxW
+            returnValue = messageBox(None,"A newer version of the tool was found. Would you like to install it now?","Hazus",0x40 | 0x4)
+            if returnValue == 1:
+                updateTool()
         else:
             print('Tool is up to date')
     except:
@@ -123,9 +129,3 @@ def internetConnected():
         return True
     except:
         return False
-
-
-"""
-conda config --remove channels anaconda
-conda config --remove channels conda-forge
-"""
