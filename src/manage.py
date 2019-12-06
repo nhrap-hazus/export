@@ -28,7 +28,7 @@ def condaInstallHazus():
 def installHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
     returnValue = messageBox(None,"The Hazus Python package is required to run this tool. Would you like to install it now?","Hazus",0x40 | 0x4)
-    if returnValue == 1:
+    if returnValue == 6:
         import os
         output = check_output('conda config --show channels')
         channels = list(map(lambda x: x.strip(), str(output).replace('\\r\\n', '').split('-')))[1:]
@@ -41,6 +41,7 @@ def installHazus():
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 1)
         print('Installing the Hazus Python package, please wait...')
         try:
+            print('conda installing hazus')
             condaInstallHazus()
         except:
             messageBox(None,"An error occured. The Hazus Python package was not installed. Please check your network settings and try again.","Hazus", 0)
@@ -48,7 +49,8 @@ def installHazus():
 def update():
     messageBox = ctypes.windll.user32.MessageBoxW
     returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x4)
-    if returnValue == 1:
+    if returnValue == 6:
+        print('conda installing hazus')
         condaInstallHazus()
 
 def checkForHazusUpdates():
@@ -64,7 +66,8 @@ def checkForHazusUpdates():
         if newestVersion != installedVersion:
             messageBox = ctypes.windll.user32.MessageBoxW
             returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x4)
-            if returnValue == 1:
+            if returnValue == 6:
+                print('updating hazus')
                 update()
         else:
             print('Hazus is up to date')
@@ -87,7 +90,8 @@ def checkForToolUpdates():
         if newestVersion != installedVersion:
             messageBox = ctypes.windll.user32.MessageBoxW
             returnValue = messageBox(None,"A newer version of the tool was found. Would you like to install it now?","Hazus",0x40 | 0x4)
-            if returnValue == 1:
+            if returnValue == 6:
+                print('updating tool')
                 updateTool()
         else:
             print('Tool is up to date')
@@ -119,6 +123,7 @@ def parseVersionFromInit(textBlob):
     return version
 
 def internetConnected():
+    print('checking for internet connection')
     try: 
         try:
             requests.get('http://google.com', timeout=0.2)
