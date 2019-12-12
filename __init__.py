@@ -10,7 +10,7 @@
     :author: James Raines; james.rainesii@fema.dhs.gov
 """
 
-__version__ = '0.0.2'
+__version__ = '0.0.1'
 
 from src import app
 app = app()
