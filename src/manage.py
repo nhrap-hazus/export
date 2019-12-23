@@ -8,15 +8,11 @@ import json
 with open('./src/config.json') as configFile:
     config = json.load(configFile)
 
-def DHScreateProxyEnv():
+def setProxyEnv():
     newEnv = os.environ.copy()
     newEnv["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
     newEnv["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
     return newEnv
-
-def DHSsetProxy():
-    os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-    os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
 
 def condaInstallHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
@@ -24,8 +20,8 @@ def condaInstallHazus():
         check_call('echo y | conda install -c nhrap hazus', shell=True)
         messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
     except:
-        print('Adding DHS proxies and retrying...')
-        proxyEnv = DHScreateProxyEnv()
+        print('Adding proxies and retrying...')
+        proxyEnv = setProxyEnv()
         check_call('echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
         messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
 
@@ -59,24 +55,23 @@ def update():
 
 def checkForHazusUpdates():
     try:
-        from hazus.legacy import exporting
-        installedVersion = exporting.__version__
+        installedVersion = pkg_resources.get_distribution('hazus').version
         try:
-            req = requests.get(config['hazusInitUrl'], timeout=0.4)
+            req = requests.get(config['hazusInitUrl'], timeout=0.3)
         except:
-            DHSsetProxy()
-            req = requests.get(config['hazusInitUrl'], timeout=0.5)
+            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            req = requests.get(config['hazusInitUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
             messageBox = ctypes.windll.user32.MessageBoxW
             returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x4)
             if returnValue == 6:
                 print('updating hazus')
-                condaInstallHazus()
+                update()
         else:
             print('Hazus is up to date')
     except:
-        print('installing hazus')
         installHazus()
 
 def checkForToolUpdates():
@@ -86,10 +81,11 @@ def checkForToolUpdates():
             textBlob = ''.join(text)
             installedVersion = parseVersionFromInit(textBlob)
         try:
-            req = requests.get(config['toolInitUrl'], timeout=0.4)
+            req = requests.get(config['toolInitUrl'], timeout=0.3)
         except:
-            DHSsetProxy()
-            req = requests.get(config['toolInitUrl'], timeout=0.5)
+            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            req = requests.get(config['toolInitUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
             messageBox = ctypes.windll.user32.MessageBoxW
@@ -130,10 +126,11 @@ def internetConnected():
     print('checking for internet connection')
     try: 
         try:
-            requests.get('http://google.com', timeout=0.3)
+            requests.get('http://google.com', timeout=0.2)
         except:
-            DHSsetProxy()
-            requests.get('http://google.com', timeout=0.3)
+            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            requests.get('http://google.com', timeout=0.2)
         return True
     except:
         return False

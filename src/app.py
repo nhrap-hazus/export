@@ -51,7 +51,7 @@ class app():
         self.style.configure('TCombobox', background=self.backgroundColor, bordercolor=self.backgroundColor, relief='flat', lightcolor=self.backgroundColor, darkcolor=self.backgroundColor, borderwidth=4, foreground=self.foregroundColor)
 
         # App parameters
-        self.root.title('Hazus Export Utility')
+        self.root.title('Hazus Export Tool')
         self.root_h = 480
         self.root_w = 330
         self.root.geometry(str(self.root_w) + 'x' + str(self.root_h))

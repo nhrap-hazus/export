@@ -28,7 +28,7 @@
             }
         }
     },
-    "hazusInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/hazus/master/hazus/legacy/exporting/__init__.py",
+    "hazusInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/hazus/master/hazus/__init__.py",
     "repoZipfileUrl": "https://github.com/nhrap-hazus/export/archive/master.zip",
     "toolInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/export/master/__init__.py"
 }
