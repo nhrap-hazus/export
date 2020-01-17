@@ -1,3 +1,3 @@
 @echo off
-activate base && start /min python src\run.py
+conda activate hazus_env && start /min python src\run.py
 exit 0

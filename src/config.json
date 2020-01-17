@@ -30,5 +30,8 @@
     },
     "hazusInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/hazus/master/hazus/__init__.py",
     "repoZipfileUrl": "https://github.com/nhrap-hazus/export/archive/master.zip",
-    "toolInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/export/master/__init__.py"
+    "toolInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/export/master/__init__.py",
+    "proxies": {
+        "fema": "http://proxy.apps.dhs.gov:80"
+    }
 }
