@@ -10,19 +10,29 @@ with open('./src/config.json') as configFile:
 
 def setProxyEnv():
     newEnv = os.environ.copy()
-    newEnv["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-    newEnv["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+    newEnv["HTTP_PROXY"] = config.proxies.fema
+    newEnv["HTTPS_PROXY"] = config.proxies.fema
     return newEnv
 
 def condaInstallHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
     try:
-        check_call('echo y | conda install -c nhrap hazus', shell=True)
+        print('Checking for the conda environment hazus_env')
+        # check_call('conda activate hazus_env', shell=True)
+        check_call('conda activate hazus_env', shell=True)
+    except:
+        print('Creating the conda hazus_env')
+        call('set HTTP_PROXY=' + config.proxies.fema, shell=True)
+        call('set HTTPS_PROXY=' + config.proxies.fema, shell=True)
+        call('echo y | conda create -y -n hazus_env', shell=True)
+    try:
+        print('Installing the hazus python package')
+        check_call('conda activate hazus_env && echo y | conda install -c nhrap hazus', shell=True)
         messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
     except:
         print('Adding proxies and retrying...')
         proxyEnv = setProxyEnv()
-        check_call('echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
+        check_call('conda activate hazus_env && echo y | conda install -c nhrap hazus', shell=True, env=proxyEnv)
         messageBox(None,"The Hazus Python package was successfully installed. Please reopen the utility.","Hazus", 0)
 
 def installHazus():
@@ -39,9 +49,9 @@ def installHazus():
             call('conda config --add channels conda-forge')
             print('conda-forge channel added')
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 1)
-        print('Installing the Hazus Python package, please wait...')
+        print('Installing the Hazus Python package, this could take a couple minutes...')
         try:
-            print('conda installing hazus')
+            print('Conda is installing hazus')
             condaInstallHazus()
         except:
             messageBox(None,"An error occured. The Hazus Python package was not installed. Please check your network settings and try again.","Hazus", 0)
@@ -50,7 +60,7 @@ def update():
     messageBox = ctypes.windll.user32.MessageBoxW
     returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x40 | 0x4)
     if returnValue == 6:
-        print('conda installing hazus')
+        print('Conda is installing hazus')
         condaInstallHazus()
 
 def checkForHazusUpdates():
@@ -59,8 +69,8 @@ def checkForHazusUpdates():
         try:
             req = requests.get(config['hazusInitUrl'], timeout=0.3)
         except:
-            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            os.environ["HTTP_PROXY"] = config.proxies.fema
+            os.environ["HTTPS_PROXY"] = config.proxies.fema
             req = requests.get(config['hazusInitUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
@@ -83,8 +93,8 @@ def checkForToolUpdates():
         try:
             req = requests.get(config['toolInitUrl'], timeout=0.3)
         except:
-            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
+            os.environ["HTTP_PROXY"] = config.proxies.fema
+            os.environ["HTTPS_PROXY"] = config.proxies.fema
             req = requests.get(config['toolInitUrl'], timeout=0.3)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
@@ -123,14 +133,14 @@ def parseVersionFromInit(textBlob):
     return version
 
 def internetConnected():
-    print('checking for internet connection')
+    print('Checking for internet connection')
     try: 
         try:
-            requests.get('http://google.com', timeout=0.2)
+            requests.get('http://google.com', timeout=0.3)
         except:
-            os.environ["HTTP_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            os.environ["HTTPS_PROXY"] = 'http://proxy.apps.dhs.gov:80'
-            requests.get('http://google.com', timeout=0.2)
+            os.environ["HTTP_PROXY"] = config.proxies.fema
+            os.environ["HTTPS_PROXY"] = config.proxies.fema
+            requests.get('http://google.com', timeout=0.3)
         return True
     except:
         return False
