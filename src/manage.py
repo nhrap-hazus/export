@@ -134,18 +134,22 @@ def checkForToolUpdates():
         messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
 
 def updateTool():
-    from distutils.dir_util import copy_tree
-    from shutil import rmtree
-    from io import BytesIO
-    from zipfile import ZipFile
-    r = requests.get(config['repoZipfileUrl'])
-    z = ZipFile(BytesIO(r.content))
-    os.getcwd()
-    z.extractall()
-    fromDirectory  = z.namelist()[0]
-    toDirectory = './'
-    copy_tree(fromDirectory, toDirectory)
-    rmtree(fromDirectory)
+    try:
+        from distutils.dir_util import copy_tree
+        from shutil import rmtree
+        from io import BytesIO
+        from zipfile import ZipFile
+        r = requests.get(config[release]['repoZipfileUrl'])
+        z = ZipFile(BytesIO(r.content))
+        os.getcwd()
+        z.extractall()
+        fromDirectory  = z.namelist()[0]
+        toDirectory = './'
+        copy_tree(fromDirectory, toDirectory)
+        rmtree(fromDirectory)
+        messageBox(0, 'Tools was successfully updated! I hope that was quick enough for you.',"Hazus", 0x1000)
+    except:
+        messageBox(0, 'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
 
 
 def parseVersionFromInit(textBlob):

@@ -4,6 +4,8 @@ The Hazus Export Tool summarizes Hazus risk assessment results stored on your de
 
 ## To Use
 
+**Must have Anaconda 3.X installed. Please read requirements**
+
 1. Download zip folder of tool from GitHub, unzip
 
 2. Double-click "hazus-export-tool.bat"
