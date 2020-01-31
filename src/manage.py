@@ -147,6 +147,7 @@ def updateTool():
         toDirectory = './'
         copy_tree(fromDirectory, toDirectory)
         rmtree(fromDirectory)
+        messageBox = ctypes.windll.user32.MessageBoxW
         messageBox(0, 'Tools was successfully updated! I hope that was quick enough for you.',"Hazus", 0x1000)
     except:
         messageBox(0, 'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
