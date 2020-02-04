@@ -1,5 +1,8 @@
 try:
-    from manage import internetConnected, checkForHazusUpdates, checkForToolUpdates
+    try:
+        from manage import internetConnected, checkForHazusUpdates, checkForToolUpdates
+    except:
+        from src.manage import internetConnected, checkForHazusUpdates, checkForToolUpdates
     if internetConnected():
         checkForHazusUpdates()
         checkForToolUpdates()
