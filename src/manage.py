@@ -89,6 +89,7 @@ def update():
         condaInstallHazus()
 
 def checkForHazusUpdates():
+    messageBox = ctypes.windll.user32.MessageBoxW
     try:
         pkg_resources.get_distribution('hazus')
         installedVersion = pkg_resources.get_distribution('hazus').version
@@ -99,7 +100,6 @@ def checkForHazusUpdates():
             req = requests.get(config[release]['hazusInitUrl'], timeout=0.5)
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            messageBox = ctypes.windll.user32.MessageBoxW
             returnValue = messageBox(None,"A newer version of the Hazus Python package was found. Would you like to install it now?","Hazus",0x1000 | 0x4)
             if returnValue == 6:
                 print('updating hazus')
@@ -110,6 +110,7 @@ def checkForHazusUpdates():
         installHazus()
 
 def checkForToolUpdates():
+    messageBox = ctypes.windll.user32.MessageBoxW
     try:
         with open('__init__.py') as init:
             text = init.readlines()
@@ -123,7 +124,6 @@ def checkForToolUpdates():
 
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            messageBox = ctypes.windll.user32.MessageBoxW
             returnValue = messageBox(None,"A newer version of the tool was found. Would you like to install it now?","Hazus",0x1000 | 0x4)
             if returnValue == 6:
                 print('updating tool')
@@ -134,6 +134,7 @@ def checkForToolUpdates():
         messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
 
 def updateTool():
+    messageBox = ctypes.windll.user32.MessageBoxW
     try:
         from distutils.dir_util import copy_tree
         from shutil import rmtree
@@ -147,7 +148,6 @@ def updateTool():
         toDirectory = './'
         copy_tree(fromDirectory, toDirectory)
         rmtree(fromDirectory)
-        messageBox = ctypes.windll.user32.MessageBoxW
         messageBox(0, 'Tools was successfully updated! I hope that was quick enough for you.',"Hazus", 0x1000)
     except:
         messageBox(0, 'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
