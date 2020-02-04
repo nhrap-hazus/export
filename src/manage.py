@@ -121,7 +121,6 @@ def checkForToolUpdates():
         except:
             setProxies()
             req = requests.get(config[release]['toolInitUrl'], timeout=0.5)
-
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
             returnValue = messageBox(None,"A newer version of the tool was found. Would you like to install it now?","Hazus",0x1000 | 0x4)
@@ -140,7 +139,11 @@ def updateTool():
         from shutil import rmtree
         from io import BytesIO
         from zipfile import ZipFile
-        r = requests.get(config[release]['repoZipfileUrl'])
+        try:
+            r = requests.get(config[release]['repoZipfileUrl'])
+        except:
+            setProxies()
+            r = requests.get(config[release]['repoZipfileUrl'])
         z = ZipFile(BytesIO(r.content))
         os.getcwd()
         z.extractall()
