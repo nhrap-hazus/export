@@ -2,3 +2,7 @@
 	path = manage
 	url = https://github.com/nhrap-dev/manage.git
 	branch = master
+[submodule ".\\src\\manage"]
+	path = .\\src\\manage
+	url = https://github.com/nhrap-dev/manage.git
+	branch = master
