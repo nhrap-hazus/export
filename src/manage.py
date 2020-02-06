@@ -5,8 +5,14 @@ import sys
 import requests
 import pkg_resources
 import json
-with open('./src/config.json') as configFile:
-    config = json.load(configFile)
+import socket
+try:
+    with open('./src/config.json') as configFile:
+        config = json.load(configFile)
+except:
+    with open('./config.json') as configFile:
+        config = json.load(configFile)
+
 
 release = config['release']
 
@@ -166,13 +172,22 @@ def parseVersionFromInit(textBlob):
     return version
 
 def internetConnected():
+    # http://zetcode.com/python/socket/
     print('Checking for internet connection')
+    socket.setdefaulttimeout(0.5)
     try: 
         try:
-            requests.get('http://google.com', timeout=0.4)
+            # try with normal connections
+            hostname = 'google.com'
+            host = socket.gethostbyname(hostname)
         except:
-            setProxies()
-            requests.get('http://google.com', timeout=0.4)
+            # adds DHS proxies and retries
+            print('retrying with proxies')
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                host = "proxy.apps.dhs.gov" #proxy server IP
+                port = 80            #proxy server port
+                s.connect((host , port))
+                s.sendall(b"GET / HTTP/1.1\r\nHost: www.google.com\r\nAccept: text/html\r\nConnection: close\r\n\r\n")
         print('Found connection')
         return True
     except:
