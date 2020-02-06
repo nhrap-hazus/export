@@ -11,4 +11,4 @@ jobs:
     - uses: actions/checkout@v2
     - name: Update submodules
       run: |
-        git submodule update --remote
+        git submodule foreach git pull origin master
