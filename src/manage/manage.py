@@ -1,4 +1,4 @@
-from subprocess import check_output, check_call, call, Popen
+from subprocess import check_output, check_call, call
 import os
 import ctypes
 import sys
