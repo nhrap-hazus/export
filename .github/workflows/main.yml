@@ -1,6 +1,6 @@
 name: CI
 
-on: [push]
+on: [push, pull]
 
 jobs:
   build:
@@ -11,4 +11,4 @@ jobs:
     - uses: actions/checkout@v2
     - name: Update submodules
       run: |
-        git submodule update
+        git submodule update --remote
