@@ -151,7 +151,6 @@ def updateTool():
             setProxies()
             r = requests.get(config[release]['repoZipfileUrl'])
         z = ZipFile(BytesIO(r.content))
-        os.getcwd()
         z.extractall()
         fromDirectory  = z.namelist()[0]
         toDirectory = './'
