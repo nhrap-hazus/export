@@ -10,8 +10,7 @@
     :author: James Raines; james.rainesii@fema.dhs.gov
 """
 
-__version__ = '0.0.1'
-__all__ = ['app', 'manage']
+__version__ = '0.0.2'
+__all__ = ['app']
 
-from .manage import manage
 from .app import app

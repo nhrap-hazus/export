@@ -6,9 +6,10 @@ try:
 
     from subprocess import check_call
     try:
-        check_call('conda activate hazus_env && python __main__.pyw', shell=True)
+        breakpoint()
+        check_call('conda activate hazus_env && python .\src\__main__.pyw', shell=True)
     except:
-        check_call('activate hazus_env && python __main__.pyw', shell=True)
+        check_call('activate hazus_env && python .\src\__main__.pyw', shell=True)
 except:
     import ctypes
     messageBox = ctypes.windll.user32.MessageBoxW

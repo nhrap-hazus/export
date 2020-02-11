@@ -320,7 +320,7 @@ class app():
             self.row += 1
             
     # Run app
-    def run_app(self):
+    def runApp(self):
         try:
             self.build_gui()
             self.root.mainloop()
