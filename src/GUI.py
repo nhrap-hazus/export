@@ -19,7 +19,7 @@ from PIL import ImageTk,Image
 from time import time, sleep
 import json
 
-class app():
+class App():
     def __init__(self):
         # Create app
         self.root = tk.Tk()
@@ -320,9 +320,14 @@ class app():
             self.row += 1
             
     # Run app
-    def runApp(self):
+    def start(self):
         try:
             self.build_gui()
             self.root.mainloop()
         except:
             manage.installHazus()
+
+# Start the app
+
+app = App()
+app.start()
