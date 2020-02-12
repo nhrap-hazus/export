@@ -1,15 +1,18 @@
 try:
-    from manage.manage import internetConnected, checkForHazusUpdates, checkForToolUpdates
+    from manage import internetConnected, checkForHazusUpdates, checkForToolUpdates
     if internetConnected():
         checkForHazusUpdates()
         checkForToolUpdates()
 
     from subprocess import check_call
     try:
-        breakpoint()
-        check_call('conda activate hazus_env && python .\src\__main__.pyw', shell=True)
+        check_call('CALL conda.bat activate hazus_env && python .\src\__main__.pyw', shell=True)
     except:
-        check_call('activate hazus_env && python .\src\__main__.pyw', shell=True)
+        try:
+            check_call('conda activate hazus_env && python .\src\__main__.pyw', shell=True)
+        except:
+            check_call('activate hazus_env && python src\__main__.pyw', shell=True)
+
 except:
     import ctypes
     messageBox = ctypes.windll.user32.MessageBoxW

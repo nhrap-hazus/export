@@ -1,3 +1,3 @@
 @echo off
-conda activate hazus_env & start /min python src\run.py
+CALL conda.bat activate hazus_env & start /min python src\run.py
 REM exit 0

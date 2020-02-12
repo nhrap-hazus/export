@@ -19,6 +19,7 @@ proxy = config['proxies']['fema']
 hazus_version_url = config[release]['hazusInitUrl']
 tool_version_url = config[release]['toolInitUrl']
 tool_zipfile_url = config[release]['repoZipfileUrl']
+tool_version_local = './src/__init__.py'
 conda_env = 'hazus_env'
 conda_channel = 'nhrap'
 python_package = 'hazus'
@@ -127,7 +128,7 @@ def checkForHazusUpdates():
 def checkForToolUpdates():
     messageBox = ctypes.windll.user32.MessageBoxW
     try:
-        with open('__init__.py') as init:
+        with open(tool_version_local) as init:
             text = init.readlines()
             textBlob = ''.join(text)
             installedVersion = parseVersionFromInit(textBlob)
