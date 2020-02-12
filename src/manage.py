@@ -61,7 +61,7 @@ def condaInstallHazus():
         try:
             print('Installing ' + python_package)
             # TODO replace this message box with a cmd that brings the terminal to the foreground
-            messageBox(0, python_package + " will be installed silently in the minimized Python prompt. Feel free to continue whatever you're doing. We will let you know when it's complete.","Hazus", 0x1000)
+            # messageBox(0, python_package + " will be installed silently in the minimized Python prompt. Feel free to continue whatever you're doing. We will let you know when it's complete.","Hazus", 0x1000)
             try:
                 check_call('conda activate ' + conda_env + ' && echo y | conda install ' + python_package, shell=True)
             except:
@@ -78,7 +78,7 @@ def condaInstallHazus():
 
 def installHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
-    returnValue = messageBox(None, python_package + " is required to run this tool. Would you like to install it now?","Hazus",0x1000 | 0x4)
+    returnValue = messageBox(None, 'The ' + python_package + " Python package is required to run this tool. Would you like to install it now?","Hazus",0x1000 | 0x4)
     if returnValue == 6:
         output = check_output('conda config --show channels')
         channels = list(map(lambda x: x.strip(), str(output).replace('\\r\\n', '').split('-')))[1:]
