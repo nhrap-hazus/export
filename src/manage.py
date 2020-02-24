@@ -12,7 +12,7 @@ try:
 except:
     with open('./config.json') as configFile:
         config = json.load(configFile)
-
+#update update
 # environmental variables
 release = config['release']
 proxy = config['proxies']['fema']
