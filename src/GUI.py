@@ -321,13 +321,9 @@ class App():
             
     # Run app
     def start(self):
-        try:
-            self.build_gui()
-            self.root.mainloop()
-        except:
-            manage.installHazus()
+        self.build_gui()
+        self.root.mainloop()
 
 # Start the app
-
 app = App()
 app.start()

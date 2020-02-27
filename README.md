@@ -8,15 +8,15 @@ The Hazus Export Tool summarizes Hazus risk assessment results stored on your de
 
 1. Download zip folder of tool from GitHub, unzip
 
-2. Double-click "hazus-export-tool.bat"
+2. Double-click "hazus-export-tool.py"
 
-3. If you don't have the Hazus Python Library installed, follow the prompt to install, then double-click "hazus-export-tool.bat" again
+3. If you don't have the Hazus Python Library installed, follow the prompt to install, then double-click "hazus-export-tool.py" again
 
 4. Select a scenario from those stored in your desktop Hazus database, listed in the drop-down menu
 
 5. Name the report file - you will be able to change the report title later
 
-6. Type important notes about your Hazus model run (inputs, date, settings, version, etc.) in the Metadata/Notes section - these are       required for sharing your data later!
+6. Type important notes about your Hazus model run (inputs, date, settings, version, etc.) in the Metadata/Notes section - these are required for sharing your data later!
 
 7. Select the types of summaries you want - text files, shape files, a pdf report, and/or a json file
 
@@ -32,16 +32,15 @@ The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be install
 
 3. Complete the installation. During installation, make sure the following options are checked:
 
-    - [x] Add Anaconda to my PATH environment variable
-    - [x] Register Anaconda as my default Python
-    - [x] **Install Anaconda for local user, rather than all users**
+   - [x] **Add Anaconda to my PATH environment variable**
+   - [x] Register Anaconda as my default Python
 
 ## Documentation
 
-Please refer to the files "EQDataDictionary", "TSDataDictionary", "FLDataDictionary", and "HUDataDictionary" for detailed information about the fields, values and units found in exported Hazus results data.
+Please refer to the files in the data-dictionaries folder: "EQDataDictionary", "TSDataDictionary", "FLDataDictionary", and "HUDataDictionary" for detailed information about the fields, values and units found in exported Hazus results data.
 
 ## Contact
 
-Issues can be reported through the repository on Github (https://github.com/nhrap-hazus)
+Issues can be reported through the repository on Github (https://github.com/nhrap-hazus/export)
 
 For questions contact hazus-support@riskmapcds.com
