@@ -24,7 +24,8 @@ tool_version_local = './src/__init__.py'
 conda_env = 'hazus_env'
 conda_channel = 'nhrap'
 python_package = 'hazus'
-httpTimeout = 0.6 # in seconds
+httpTimeout = 0.6  # in seconds
+
 
 def createProxyEnv():
     newEnv = os.environ.copy()
@@ -32,15 +33,17 @@ def createProxyEnv():
     newEnv["HTTPS_PROXY"] = proxy
     return newEnv
 
+
 def setProxies():
     call('set HTTP_PROXY=' + proxy, shell=True)
     call('set HTTPS_PROXY=' + proxy, shell=True)
     os.environ["HTTP_PROXY"] = proxy
     os.environ["HTTPS_PROXY"] = proxy
 
+
 def condaInstallHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
-    print('Checking for the conda environment '+ conda_env)
+    print('Checking for the conda environment ' + conda_env)
     try:
         try:
             check_call('CALL conda.bat activate ' + conda_env, shell=True)
@@ -52,21 +55,28 @@ def condaInstallHazus():
         print('Installing ' + python_package)
         handleProxy()
         try:
-            check_call('CALL conda.bat activate ' + conda_env + ' && echo y | conda install ' + python_package, shell=True)
+            check_call('CALL conda.bat activate ' + conda_env +
+                       ' && echo y | conda install ' + python_package, shell=True)
         except:
             call('echo y | conda create -y -n ' + conda_env, shell=True)
-            check_call('CALL conda.bat activate ' + conda_env + ' && echo y | conda install ' + python_package, shell=True)
+            check_call('CALL conda.bat activate ' + conda_env +
+                       ' && echo y | conda install ' + python_package, shell=True)
 
-        messageBox(0, python_package + " was successfully installed!","Hazus", 0x1000)
+        messageBox(0, python_package +
+                   " was successfully installed!", "Hazus", 0x1000)
     except:
-        messageBox(0, 'Unable to install ' + python_package + '. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
+        messageBox(0, 'Unable to install ' + python_package +
+                   '. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "Hazus", 0x1000)
+
 
 def installHazus():
     messageBox = ctypes.windll.user32.MessageBoxW
-    returnValue = messageBox(None, 'The ' + python_package + " Python package is required to run this tool. Would you like to install it now?","Hazus",0x1000 | 0x4)
+    returnValue = messageBox(None, 'The ' + python_package +
+                             " Python package is required to run this tool. Would you like to install it now?", "Hazus", 0x1000 | 0x4)
     if returnValue == 6:
         output = check_output('conda config --show channels')
-        channels = list(map(lambda x: x.strip(), str(output).replace('\\r\\n', '').split('-')))[1:]
+        channels = list(map(lambda x: x.strip(), str(
+            output).replace('\\r\\n', '').split('-')))[1:]
         if not 'anaconda' in channels:
             call('conda config --add channels anaconda')
             print('anaconda channel added')
@@ -76,32 +86,40 @@ def installHazus():
         if not conda_channel in channels:
             call('conda config --add channels ' + conda_channel)
             print(conda_channel + ' channel added')
-        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 1)
-        print("Installing " + python_package + " - hold your horses, this could take a few minutes... but it's totally worth it")
+        ctypes.windll.user32.ShowWindow(
+            ctypes.windll.kernel32.GetConsoleWindow(), 1)
+        print("Installing " + python_package +
+              " - hold your horses, this could take a few minutes... but it's totally worth it")
         try:
             print('Conda is installing ' + python_package)
             condaInstallHazus()
         except:
-            messageBox(0,"An error occured. " + python_package + " was not installed. Please check your network settings and try again.","Hazus", 0x1000)
+            messageBox(0, "An error occured. " + python_package +
+                       " was not installed. Please check your network settings and try again.", "Hazus", 0x1000)
+
 
 def checkForHazusUpdates():
     messageBox = ctypes.windll.user32.MessageBoxW
     try:
-        installedVersion = pkg_resources.get_distribution(python_package).version
+        installedVersion = pkg_resources.get_distribution(
+            python_package).version
 
         handleProxy()
         req = requests.get(hazus_version_url, timeout=httpTimeout)
 
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            returnValue = messageBox(None,"A newer version of " + python_package + " was found. Would you like to install it now?","Hazus",0x1000 | 0x4)
+            returnValue = messageBox(None, "A newer version of " + python_package +
+                                     " was found. Would you like to install it now?", "Hazus", 0x1000 | 0x4)
             if returnValue == 6:
-                messageBox(0, 'Hazus updates are installing. We will let you know when its done!',"Hazus", 0x1000)
+                messageBox(
+                    0, 'Hazus updates are installing. We will let you know when its done!', "Hazus", 0x1000)
                 condaInstallHazus()
         else:
             print(python_package + ' is up to date')
     except:
         installHazus()
+
 
 def checkForToolUpdates():
     messageBox = ctypes.windll.user32.MessageBoxW
@@ -116,14 +134,16 @@ def checkForToolUpdates():
 
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            returnValue = messageBox(None,"A newer version of the tool was found. Would you like to install it now?","Hazus",0x1000 | 0x4)
+            returnValue = messageBox(
+                None, "A newer version of the tool was found. Would you like to install it now?", "Hazus", 0x1000 | 0x4)
             if returnValue == 6:
                 print('updating tool')
                 updateTool()
         else:
             print('Tool is up to date')
     except:
-        messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
+        messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "Hazus", 0x1000)
+
 
 def updateTool():
     messageBox = ctypes.windll.user32.MessageBoxW
@@ -138,13 +158,15 @@ def updateTool():
 
         z = ZipFile(BytesIO(r.content))
         z.extractall()
-        fromDirectory  = z.namelist()[0]
+        fromDirectory = z.namelist()[0]
         toDirectory = './'
         copy_tree(fromDirectory, toDirectory)
         rmtree(fromDirectory)
-        messageBox(0, 'Tools was successfully updated! I hope that was quick enough for you.',"Hazus", 0x1000)
+        messageBox(
+            0, 'Tools was successfully updated! I hope that was quick enough for you.', "Hazus", 0x1000)
     except:
-        messageBox(0, 'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.',"Hazus", 0x1000)
+        messageBox(
+            0, 'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "Hazus", 0x1000)
 
 
 def parseVersionFromInit(textBlob):
@@ -156,6 +178,7 @@ def parseVersionFromInit(textBlob):
     version = version.strip()
     return version
 
+
 def internetConnected():
     cnxn = handleProxy()
     if cnxn == -1:
@@ -163,10 +186,11 @@ def internetConnected():
     else:
         return True
 
+
 def handleProxy():
     try:
         socket.setdefaulttimeout(httpTimeout)
-        port = 80 
+        port = 80
         try:
             # try without the proxy
             host = 'google.com'    # The remote host
@@ -176,7 +200,7 @@ def handleProxy():
             return False
         except:
             # try with the fema proxy
-            host = "proxy.apps.dhs.gov" #proxy server IP
+            host = "proxy.apps.dhs.gov"  # proxy server IP
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((host, port))
             s.close()
