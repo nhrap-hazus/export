@@ -5,7 +5,7 @@ try:
         checkForToolUpdates()
 
     from subprocess import check_call
-    check_call('call conda.bat activate hazus_env && python .\src\GUI.py', shell=True)
+    check_call('CALL conda.bat activate hazus_env && python .\src\GUI.py', shell=True)
 
 except:
     import ctypes
