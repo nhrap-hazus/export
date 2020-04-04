@@ -38,12 +38,24 @@ Follow the steps below to run FAST. To ensure .py files run when double-clicked:
 
 1. Download zip folder from GitHub, unzip.
 
+![Download Export](Images/Step1.png "Download Export")
+
 2. Double-click "hazus-export-tool.py". If you don't have the Hazus Python Library installed, follow the prompt to install, then double-click "hazus-export-tool.py" again
+
+![Open Export](Images/Step2.png "Open Export")
 
 3. Select a study region to export from those stored in your dekstop Hazus database, as shown in the drop-down menu.
 
-5. Provide a Report Title and type notes about your selected Hazus analysis (model inputs, date, settings, version, etc.). Metadata are required to share your model results with FEMA!
+![Select Study Region](Images/Step3.png "Select Study Region")
 
-6. Select summary information to export and a folder destination for exported files.
+4. Provide a Report Title and type notes about your selected Hazus analysis (model inputs, date, settings, version, etc.). Metadata are required to share your model results with FEMA!
 
-7. Click "Run". 
+![Analysis Information](Images/Step4.png "Analysis Information")
+
+5. Select summary information to export and a folder destination for exported files.
+
+![Summary Information and Destination](Images/Step6.png "Summary Information and Destination")
+
+6. Click "Run".
+
+![Run and Review](Images/Step7.png "Run and Review")
