@@ -44,6 +44,6 @@ Follow the steps below to run FAST. To ensure .py files run when double-clicked:
 
 5. Provide a Report Title and type notes about your selected Hazus analysis (model inputs, date, settings, version, etc.). Metadata are required to share your model results with FEMA!
 
-7. Select summary information.
+6. Select summary information to export and a folder destination for exported files.
 
-8. Select a folder location for summary information and click "Run".
+7. Click "Run". 
