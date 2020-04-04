@@ -29,33 +29,28 @@ For questions contact hazus-support@riskmapcds.com
 
 ## To Use
 
-Follow the steps below to run FAST. To ensure .py files run when double-clicked:
+Follow the steps below to run FAST. To ensure .py files run when double-clicked, right-click the .py file and go to Properties. Under the "General" tab next to "Opens With", make sure "python.exe" is selected. If not, click "Change" and select "python.exe" from your Python installation directory.
 
-1. Right-click the .py file and go to Properties. 
-2. Under the "General" tab next to "Opens With", make sure "python.exe" is selected. If not, click "Change" and select "python.exe" from your Python installation directory.
-
-**Must have Anaconda Python 3.7 installed. Please read requirements.**
-
-1. Download zip folder from GitHub, unzip.
+**1. Download zip folder from GitHub, unzip.**
 
 ![Download Export](Images/Step1.png "Download Export")
 
-2. Double-click "hazus-export-tool.py". If you don't have the Hazus Python Library installed, follow the prompt to install, then double-click "hazus-export-tool.py" again
+**2. Double-click "hazus-export-tool.py". If you don't have the Hazus Python Library installed, follow the prompt to install, then double-click "hazus-export-tool.py" again**
 
 ![Open Export](Images/Step2.png "Open Export")
 
-3. Select a study region to export from those stored in your dekstop Hazus database, as shown in the drop-down menu.
+**3. Select a study region to export from those stored in your dekstop Hazus database, as shown in the drop-down menu.**
 
 ![Select Study Region](Images/Step3.png "Select Study Region")
 
-4. Provide a Report Title and type notes about your selected Hazus analysis (model inputs, date, settings, version, etc.). Metadata are required to share your model results with FEMA!
+**4. Provide a Report Title and type notes about your selected Hazus analysis (model inputs, date, settings, version, etc.). Metadata are required to share your model results with FEMA!**
 
 ![Analysis Information](Images/Step4.png "Analysis Information")
 
-5. Select summary information to export and a folder destination for exported files.
+**5. Select summary information to export and a folder destination for exported files.**
 
 ![Summary Information and Destination](Images/Step6.png "Summary Information and Destination")
 
-6. Click "Run".
+**6. Click "Run".**
 
 ![Run and Review](Images/Step7.png "Run and Review")
