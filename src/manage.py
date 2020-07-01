@@ -7,6 +7,7 @@ import pkg_resources
 import json
 import socket
 
+
 try:
     with open('./src/config.json') as configFile:
         config = json.load(configFile)
@@ -17,17 +18,27 @@ except:
 # environmental variables
 release = config['release']
 proxy = config['proxies']['fema']
-hazus_version_url = config[release]['hazusInitUrl']
+hazpy_version_url = config[release]['hazpyInitUrl']
 tool_version_url = config[release]['toolInitUrl']
 tool_zipfile_url = config[release]['repoZipfileUrl']
 tool_version_local = './src/__init__.py'
-conda_env = 'hazus_env'
-conda_channel = 'nhrap'
-python_package = 'hazus'
-httpTimeout = 0.6  # in seconds
+conda_env = 'hazpy_env'
+if release == 'prod':
+    conda_channel = 'nhrap'
+if release == 'dev':
+    conda_channel = 'nhrap-dev'
+python_package = 'hazpy'
+httpTimeout = 2  # in seconds
+messageBox = ctypes.windll.user32.MessageBoxW
+# ctypes.set_conversion_mode('utf-8', 'strict')
 
 
 def createProxyEnv():
+    """ Creates a copy of the os environmental variables with updated proxies
+
+    Returns:
+        newEnv: os.environ -- a copy of the os.environ that can be used in subprocess calls
+    """
     newEnv = os.environ.copy()
     newEnv["HTTP_PROXY"] = proxy
     newEnv["HTTPS_PROXY"] = proxy
@@ -35,94 +46,106 @@ def createProxyEnv():
 
 
 def setProxies():
+    """ Temporarily updates the local environmental variables with updated proxies
+    """
     call('set HTTP_PROXY=' + proxy, shell=True)
     call('set HTTPS_PROXY=' + proxy, shell=True)
     os.environ["HTTP_PROXY"] = proxy
     os.environ["HTTPS_PROXY"] = proxy
 
 
-def condaInstallHazus():
-    messageBox = ctypes.windll.user32.MessageBoxW
+def condaInstallHazPy():
+    """ Uses conda to install the latest version of hazpy
+    """
+    
     print('Checking for the conda environment ' + conda_env)
     try:
         try:
             check_call('CALL conda.bat activate ' + conda_env, shell=True)
         except:
-            print('Creating the conda ' + conda_env)
-            handleProxy()
-            call('echo y | conda create -y -n ' + conda_env, shell=True)
+            try:
+                print('Creating the conda ' + conda_env)
+                handleProxy()
+                call('echo y | conda create -y -n ' + conda_env, shell=True)
+            except:
+                call('conda deactivate && conda env remove -n ' + conda_env, shell=True)
 
         print('Installing ' + python_package)
         handleProxy()
         try:
             check_call('CALL conda.bat activate ' + conda_env +
-                       ' && echo y | conda install ' + python_package, shell=True)
+                       ' && echo y | conda install ' + python_package + ' -f', shell=True)
         except:
             call('echo y | conda create -y -n ' + conda_env, shell=True)
             check_call('CALL conda.bat activate ' + conda_env +
-                       ' && echo y | conda install ' + python_package, shell=True)
+                       ' && echo y | conda install ' + python_package + ' -f', shell=True)
 
-        messageBox(0, python_package +
-                   " was successfully installed!", "Hazus", 0x1000)
+        messageBox(0, u'The ' + python_package +
+                   u" python package was successfully installed! The update will take effect when the tool is reopened.", u"HazPy", 0x1000)
     except:
-        messageBox(0, 'Unable to install ' + python_package +
-                   '. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "Hazus", 0x1000)
+        messageBox(0, u'Unable to install ' + python_package +
+                   u'. If this error persists, contact hazus-support@riskmapcds.com for assistance.', u"HazPy", 0x1000)
 
 
-def installHazus():
-    messageBox = ctypes.windll.user32.MessageBoxW
-    returnValue = messageBox(None, 'The ' + python_package +
-                             " Python package is required to run this tool. Would you like to install it now?", "Hazus", 0x1000 | 0x4)
-    if returnValue == 6:
-        output = check_output('conda config --show channels')
-        channels = list(map(lambda x: x.strip(), str(
-            output).replace('\\r\\n', '').split('-')))[1:]
-        if not 'anaconda' in channels:
-            call('conda config --add channels anaconda')
-            print('anaconda channel added')
-        if not 'conda' in channels and not 'forge' in channels:
-            call('conda config --add channels conda-forge')
-            print('conda-forge channel added')
-        if not conda_channel in channels:
-            call('conda config --add channels ' + conda_channel)
-            print(conda_channel + ' channel added')
-        ctypes.windll.user32.ShowWindow(
-            ctypes.windll.kernel32.GetConsoleWindow(), 1)
-        print("Installing " + python_package +
-              " - hold your horses, this could take a few minutes... but it's totally worth it")
-        try:
+def createHazPyEnvironment():
+    
+    returnValue = messageBox(None, u'The ' + python_package +
+                             u" python package is required to run this tool. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
+    try:
+        if returnValue == 6:
+            output = check_output('conda config --show channels')
+            channels = list(map(lambda x: x.strip(), str(
+                output).replace('\\r\\n', '').split('-')))[1:]
+            if not 'anaconda' in channels:
+                call('conda config --add channels anaconda')
+                print('anaconda channel added')
+            if not 'conda' in channels and not 'forge' in channels:
+                call('conda config --add channels conda-forge')
+                print('conda-forge channel added')
+            if not 'nsls2forge' in channels and not 'forge' in channels:
+                call('conda config --add channels nsls2forge')
+                print('nsls2forge channel added')
+            if not conda_channel in channels:
+                call('conda config --add channels ' + conda_channel)
+                print(conda_channel + ' channel added')
+            ctypes.windll.user32.ShowWindow(
+                ctypes.windll.kernel32.GetConsoleWindow(), 1)
+            print("Installing " + python_package +
+                " - hold your horses, this could take a few minutes... but it's totally worth it")
             print('Conda is installing ' + python_package)
-            condaInstallHazus()
-        except:
-            messageBox(0, "An error occured. " + python_package +
-                       " was not installed. Please check your network settings and try again.", "Hazus", 0x1000)
+            condaInstallHazPy()
+    except:
+        messageBox(0, u"An error occured. " + python_package +
+                u" was not installed. Please check your network settings and try again.", u"HazPy", 0x1000)
 
 
-def checkForHazusUpdates():
-    messageBox = ctypes.windll.user32.MessageBoxW
+def checkForHazPyUpdates():
+    
     try:
         installedVersion = pkg_resources.get_distribution(
             python_package).version
 
         handleProxy()
-        req = requests.get(hazus_version_url, timeout=httpTimeout)
+        req = requests.get(hazpy_version_url, timeout=httpTimeout)
 
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
-            returnValue = messageBox(None, "A newer version of " + python_package +
-                                     " was found. Would you like to install it now?", "Hazus", 0x1000 | 0x4)
+            returnValue = messageBox(None, u"A new version of the " + python_package +
+                                     u" python package was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
             if returnValue == 6:
                 messageBox(
-                    0, 'Hazus updates are installing. We will let you know when its done!', "Hazus", 0x1000)
-                condaInstallHazus()
+                    0, u'Updates are installing. We will let you know when its done!', u"HazPy", 0x1000)
+                condaInstallHazPy()
         else:
             print(python_package + ' is up to date')
     except:
-        installHazus()
+        # testing pass
+        pass
+        # createHazPyEnvironment()
 
 
 def checkForToolUpdates():
-    messageBox = ctypes.windll.user32.MessageBoxW
+    
     try:
         with open(tool_version_local) as init:
             text = init.readlines()
@@ -135,18 +158,20 @@ def checkForToolUpdates():
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
             returnValue = messageBox(
-                None, "A newer version of the tool was found. Would you like to install it now?", "Hazus", 0x1000 | 0x4)
+                None, u"A new version of the tool was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
             if returnValue == 6:
                 print('updating tool')
                 updateTool()
         else:
             print('Tool is up to date')
     except:
-        messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "Hazus", 0x1000)
+        # testing pass
+        pass
+        # messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "HazPy", 0x1000)
 
 
 def updateTool():
-    messageBox = ctypes.windll.user32.MessageBoxW
+    
     try:
         from distutils.dir_util import copy_tree
         from shutil import rmtree
@@ -163,10 +188,10 @@ def updateTool():
         copy_tree(fromDirectory, toDirectory)
         rmtree(fromDirectory)
         messageBox(
-            0, 'Tools was successfully updated! I hope that was quick enough for you.', "Hazus", 0x1000)
+            0, u'The tool was successfully updated! I hope that was quick enough for you. The update will take effect when the tool is reopened.', u"HazPy", 0x1000)
     except:
         messageBox(
-            0, 'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "Hazus", 0x1000)
+            0, u'The tool update failed. If this error persists, contact hazus-support@riskmapcds.com for assistance.', u"HazPy", 0x1000)
 
 
 def parseVersionFromInit(textBlob):
