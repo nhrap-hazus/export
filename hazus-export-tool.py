@@ -1,7 +1,17 @@
 from subprocess import call
+import json
+
 try:
+    # load config
+    try:
+        with open('./src/config.json') as configFile:
+            config = json.load(configFile)
+    except:
+        with open('./config.json') as configFile:
+            config = json.load(configFile)
+
     # check if the virtual environment has been created
-    virtual_env = 'hazpy_env'
+    virtual_env = config['virtualEnvironment']
     res = call('CALL conda.bat activate ' + virtual_env, shell=True)
     if res == 1:
         # create the virtual environment

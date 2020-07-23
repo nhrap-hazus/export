@@ -11,9 +11,11 @@ import socket
 try:
     with open('./src/config.json') as configFile:
         config = json.load(configFile)
+        tool_version_local = './src/__init__.py'
 except:
     with open('./config.json') as configFile:
         config = json.load(configFile)
+        tool_version_local = './__init__.py'
 
 # environmental variables
 release = config['release']
@@ -21,8 +23,12 @@ proxy = config['proxies']['fema']
 hazpy_version_url = config[release]['hazpyInitUrl']
 tool_version_url = config[release]['toolInitUrl']
 tool_zipfile_url = config[release]['repoZipfileUrl']
-tool_version_local = './src/__init__.py'
-conda_env = 'hazpy_env'
+# TODO remove try/except when config updated across tools
+try:
+    conda_env = config['virtualEnvironment']
+except:
+    conda_env = 'hazus_env'
+# TODO add conda_channel to config rather than release
 if release == 'prod':
     conda_channel = 'nhrap'
 if release == 'dev':
@@ -57,7 +63,7 @@ def setProxies():
 def condaInstallHazPy():
     """ Uses conda to install the latest version of hazpy
     """
-    
+
     print('Checking for the conda environment ' + conda_env)
     try:
         try:
@@ -68,7 +74,8 @@ def condaInstallHazPy():
                 handleProxy()
                 call('echo y | conda create -y -n ' + conda_env, shell=True)
             except:
-                call('conda deactivate && conda env remove -n ' + conda_env, shell=True)
+                call('conda deactivate && conda env remove -n ' +
+                     conda_env, shell=True)
 
         print('Installing ' + python_package)
         handleProxy()
@@ -88,7 +95,7 @@ def condaInstallHazPy():
 
 
 def createHazPyEnvironment():
-    
+
     returnValue = messageBox(None, u'The ' + python_package +
                              u" python package is required to run this tool. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
     try:
@@ -111,16 +118,16 @@ def createHazPyEnvironment():
             ctypes.windll.user32.ShowWindow(
                 ctypes.windll.kernel32.GetConsoleWindow(), 1)
             print("Installing " + python_package +
-                " - hold your horses, this could take a few minutes... but it's totally worth it")
+                  " - hold your horses, this could take a few minutes... but it's totally worth it")
             print('Conda is installing ' + python_package)
             condaInstallHazPy()
     except:
         messageBox(0, u"An error occured. " + python_package +
-                u" was not installed. Please check your network settings and try again.", u"HazPy", 0x1000)
+                   u" was not installed. Please check your network settings and try again.", u"HazPy", 0x1000)
 
 
 def checkForHazPyUpdates():
-    
+
     try:
         installedVersion = pkg_resources.get_distribution(
             python_package).version
@@ -145,7 +152,7 @@ def checkForHazPyUpdates():
 
 
 def checkForToolUpdates():
-    
+
     try:
         with open(tool_version_local) as init:
             text = init.readlines()
@@ -171,7 +178,7 @@ def checkForToolUpdates():
 
 
 def updateTool():
-    
+
     try:
         from distutils.dir_util import copy_tree
         from shutil import rmtree
