@@ -286,8 +286,6 @@ class App():
             tk.messagebox.showinfo("HazPy", "Complete - Output files can be found at: " +
                                 outputPath)
             self.removeWidget_progress()
-            breakpoint()
-            self.scale("all",0,0,'350','550')
 
 
         except:
