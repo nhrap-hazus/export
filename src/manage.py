@@ -129,8 +129,7 @@ def createHazPyEnvironment():
 def checkForHazPyUpdates():
 
     try:
-        installedVersion = pkg_resources.get_distribution(
-            python_package).version
+        installedVersion = pkg_resources.get_distribution(python_package).version
 
         handleProxy()
         req = requests.get(hazpy_version_url, timeout=httpTimeout)

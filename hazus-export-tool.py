@@ -19,7 +19,7 @@ try:
         createHazPyEnvironment()
     else:
         call('CALL conda.bat activate '+virtual_env+' && start /min python src/app.py', shell=True)
-        call('CALL conda.bat activate '+virtual_env+' && start /min python src/update.py', shell=True)
+        # call('CALL conda.bat activate '+virtual_env+' && start /min python src/update.py', shell=True)
 except:
     import ctypes
     import sys

@@ -138,11 +138,11 @@ class App():
             if self.exportOptions['csv']:
                 exportOptionsCount += 4
             if self.exportOptions['shapefile']:
-                exportOptionsCount += 2
-            if self.exportOptions['geojson']:
-                exportOptionsCount += 2
-            if self.exportOptions['report']:
                 exportOptionsCount += 3
+            if self.exportOptions['geojson']:
+                exportOptionsCount += 3
+            if self.exportOptions['report']:
+                exportOptionsCount += 2
             progressIncrement = 100 / exportOptionsCount
             progressValue = 0
             
@@ -217,6 +217,15 @@ class App():
                             outputPath + '/damaged_facilities.shp')
                     except:
                         print('Damaged facilities not available to export.')
+                    try:
+                        progressValue = progressValue + progressIncrement
+                        self.updateProgressBar(progressValue, 'Writing hazard to Shapefile')
+                        if not 'hazard' in dir():
+                            hazard = self.studyRegion.getHazardGeoDataFrame()
+                        hazard.toShapefile(
+                            outputPath + '/hazard.shp')
+                    except:
+                        print('Hazard not available to export.')
                 except:
                     ctypes.windll.user32.MessageBoxW(
                         None, u"Unexpected error exporting Shapefile: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
@@ -239,6 +248,15 @@ class App():
                             outputPath + '/damaged_facilities.geojson')
                     except:
                         print('Damaged facilities not available to export.')
+                    try:
+                        progressValue = progressValue + progressIncrement
+                        self.updateProgressBar(progressValue, 'Writing hazard to GeoJSON')
+                        if not 'hazard' in dir():
+                            hazard = self.studyRegion.getHazardGeoDataFrame()
+                        hazard.toGeoJSON(
+                            outputPath + '/hazard.geojson')
+                    except:
+                        print('Hazard not available to export.')
                 except:
                     ctypes.windll.user32.MessageBoxW(
                         None, u"Unexpected error exporting GeoJSON: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
@@ -741,10 +759,27 @@ class App():
             messageBox = ctypes.windll.user32.MessageBoxW
             messageBox(0, "Unable to build the app: " + str(sys.exc_info()[0]) + " | If this problem persists, contact hazus-support@riskmapcds.com.", "HazPy", 0x1000)
 
+    def centerApp(self):
+        try:
+            screenWidth = self.root.winfo_screenwidth()
+            screenHeight = self.root.winfo_screenheight()
+            windowWidth = self.root.winfo_reqwidth() + 100
+            windowHeight = self.root.winfo_reqheight() + 300
+
+            positionRight = int(screenWidth/2 - windowWidth/2)
+            positionDown = int(screenHeight/2 - windowHeight/2)
+
+            self.root.geometry("+{}+{}".format(positionRight, positionDown))
+        except:
+            print('unable to center the app')
+            pass
+
     def start(self):
         """builds the GUI and starts the app"""
         self.build_gui()
+        self.centerApp() # center application on screen
         self.root.mainloop()
+        self.root.lift() # bring app to front
 
 # Start the app
 app = App()
