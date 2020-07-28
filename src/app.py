@@ -28,14 +28,9 @@ class App():
 
         # load config
         config = json.loads(open('src/config.json').read())
-        # debug
-        self.debug = config['debug']
 
         # global styles
-        themeId = config['activeThemeId']
-        theme = list(filter(
-            lambda x: config['themes'][x]['themeId'] == themeId, config['themes']))[0]
-        self.globalStyles = config['themes'][theme]['style']
+        self.globalStyles = config['themes'][config['activeTheme']]
         self.backgroundColor = self.globalStyles['backgroundColor']
         self.foregroundColor = self.globalStyles['foregroundColor']
         self.hoverColor = self.globalStyles['hoverColor']

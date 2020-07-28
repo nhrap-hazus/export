@@ -18,25 +18,18 @@ except:
         tool_version_local = './__init__.py'
 
 # environmental variables
-release = config['release']
 proxy = config['proxies']['fema']
-hazpy_version_url = config[release]['hazpyInitUrl']
-tool_version_url = config[release]['toolInitUrl']
-tool_zipfile_url = config[release]['repoZipfileUrl']
-# TODO remove try/except when config updated across tools
-try:
-    conda_env = config['virtualEnvironment']
-except:
-    conda_env = 'hazus_env'
-# TODO add conda_channel to config rather than release
-if release == 'prod':
-    conda_channel = 'nhrap'
-if release == 'dev':
-    conda_channel = 'nhrap-dev'
-python_package = 'hazpy'
-httpTimeout = 2  # in seconds
+release = config['release']
+hazpy_version_url = release['hazpyInitUrl']
+tool_version_url = release['toolInitUrl']
+tool_zipfile_url = release['repoZipfileUrl']
+conda_channel = release['condaChannel']
+python_package = release['pythonPackage']
+virtual_environment = release['virtualEnvironment']
+http_timeout = release['httpTimeout']  # in seconds
+
+# init message dialog box
 messageBox = ctypes.windll.user32.MessageBoxW
-# ctypes.set_conversion_mode('utf-8', 'strict')
 
 
 def createProxyEnv():
@@ -64,27 +57,30 @@ def condaInstallHazPy():
     """ Uses conda to install the latest version of hazpy
     """
 
-    print('Checking for the conda environment ' + conda_env)
+    print('Checking for the conda environment ' + virtual_environment)
     try:
         try:
-            check_call('CALL conda.bat activate ' + conda_env, shell=True)
+            check_call('CALL conda.bat activate ' +
+                       virtual_environment, shell=True)
         except:
             try:
-                print('Creating the conda ' + conda_env)
+                print('Creating the conda ' + virtual_environment)
                 handleProxy()
-                call('echo y | conda create -y -n ' + conda_env, shell=True)
+                call('echo y | conda create -y -n ' +
+                     virtual_environment, shell=True)
             except:
                 call('conda deactivate && conda env remove -n ' +
-                     conda_env, shell=True)
+                     virtual_environment, shell=True)
 
         print('Installing ' + python_package)
         handleProxy()
         try:
-            check_call('CALL conda.bat activate ' + conda_env +
+            check_call('CALL conda.bat activate ' + virtual_environment +
                        ' && echo y | conda install ' + python_package + ' -f', shell=True)
         except:
-            call('echo y | conda create -y -n ' + conda_env, shell=True)
-            check_call('CALL conda.bat activate ' + conda_env +
+            call('echo y | conda create -y -n ' +
+                 virtual_environment, shell=True)
+            check_call('CALL conda.bat activate ' + virtual_environment +
                        ' && echo y | conda install ' + python_package + ' -f', shell=True)
 
         messageBox(0, u'The ' + python_package +
@@ -129,10 +125,11 @@ def createHazPyEnvironment():
 def checkForHazPyUpdates():
 
     try:
-        installedVersion = pkg_resources.get_distribution(python_package).version
+        installedVersion = pkg_resources.get_distribution(
+            python_package).version
 
         handleProxy()
-        req = requests.get(hazpy_version_url, timeout=httpTimeout)
+        req = requests.get(hazpy_version_url, timeout=http_timeout)
 
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
@@ -159,7 +156,7 @@ def checkForToolUpdates():
             installedVersion = parseVersionFromInit(textBlob)
 
         handleProxy()
-        req = requests.get(tool_version_url, timeout=httpTimeout)
+        req = requests.get(tool_version_url, timeout=http_timeout)
 
         newestVersion = parseVersionFromInit(req.text)
         if newestVersion != installedVersion:
@@ -220,7 +217,7 @@ def internetConnected():
 
 def handleProxy():
     try:
-        socket.setdefaulttimeout(httpTimeout)
+        socket.setdefaulttimeout(http_timeout)
         port = 80
         try:
             # try without the proxy
