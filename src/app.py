@@ -774,8 +774,8 @@ class App():
         """builds the GUI and starts the app"""
         self.build_gui()
         self.centerApp() # center application on screen
-        self.root.mainloop()
         self.root.lift() # bring app to front
+        self.root.mainloop()
 
 # Start the app
 app = App()

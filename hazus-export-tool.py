@@ -11,7 +11,8 @@ try:
             config = json.load(configFile)
 
     # check if the virtual environment has been created
-    virtual_env = config['virtualEnvironment']
+    release = config['release']
+    virtual_env = config[release]['virtualEnvironment']
     res = call('CALL conda.bat activate ' + virtual_env, shell=True)
     if res == 1:
         # create the virtual environment
