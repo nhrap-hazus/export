@@ -20,13 +20,14 @@ except:
 # environmental variables
 proxy = config['proxies']['fema']
 release = config['release']
-hazpy_version_url = release['hazpyInitUrl']
-tool_version_url = release['toolInitUrl']
-tool_zipfile_url = release['repoZipfileUrl']
-conda_channel = release['condaChannel']
-python_package = release['pythonPackage']
-virtual_environment = release['virtualEnvironment']
-http_timeout = release['httpTimeout']  # in seconds
+hazpy_version_url = config[release]['hazpyInitUrl']
+tool_version_url = config[release]['toolInitUrl']
+tool_zipfile_url = config[release]['repoZipfileUrl']
+conda_channel = config[release]['condaChannel']
+python_package = config[release]['pythonPackage']
+python_version = config[release]['pythonVersion']
+virtual_environment = config[release]['virtualEnvironment']
+http_timeout = config[release]['httpTimeout']  # in seconds
 
 # init message dialog box
 messageBox = ctypes.windll.user32.MessageBoxW
@@ -66,8 +67,7 @@ def condaInstallHazPy():
             try:
                 print('Creating the conda ' + virtual_environment)
                 handleProxy()
-                call('echo y | conda create -y -n ' +
-                     virtual_environment, shell=True)
+                call('echo y | conda create -y -n {ve} python={pv}'.format(ve=virtual_environment, pv=python_version), shell=True)
             except:
                 call('conda deactivate && conda env remove -n ' +
                      virtual_environment, shell=True)
@@ -75,13 +75,10 @@ def condaInstallHazPy():
         print('Installing ' + python_package)
         handleProxy()
         try:
-            check_call('CALL conda.bat activate ' + virtual_environment +
-                       ' && echo y | conda install ' + python_package + ' -f', shell=True)
+            check_call('CALL conda.bat activate {ve} && echo y | conda install -c {c} {p} --force-reinstall'.format(ve=virtual_environment, c=conda_channel, p=python_package), shell=True)
         except:
-            call('echo y | conda create -y -n ' +
-                 virtual_environment, shell=True)
-            check_call('CALL conda.bat activate ' + virtual_environment +
-                       ' && echo y | conda install ' + python_package + ' -f', shell=True)
+            call('echo y | conda create -y -n {ve} python={pv}'.format(ve=virtual_environment, pv=python_version), shell=True)
+            check_call('CALL conda.bat activate {ve} && echo y | conda install -c {c} {p} --force-reinstall'.format(ve=virtual_environment, c=conda_channel, p=python_package), shell=True)
 
         messageBox(0, u'The ' + python_package +
                    u" python package was successfully installed! The update will take effect when the tool is reopened.", u"HazPy", 0x1000)
@@ -125,9 +122,7 @@ def createHazPyEnvironment():
 def checkForHazPyUpdates():
 
     try:
-        installedVersion = pkg_resources.get_distribution(
-            python_package).version
-
+        installedVersion = pkg_resources.get_distribution(python_package).version
         handleProxy()
         req = requests.get(hazpy_version_url, timeout=http_timeout)
 
@@ -142,9 +137,7 @@ def checkForHazPyUpdates():
         else:
             print(python_package + ' is up to date')
     except:
-        # testing pass
-        pass
-        # createHazPyEnvironment()
+        createHazPyEnvironment()
 
 
 def checkForToolUpdates():

@@ -30,6 +30,7 @@
     "virtualEnvironment": "hazus_env",
     "condaChannel": "nhrap",
     "pythonPackage": "hazpy",
+    "pythonVersion": "3.7",
     "httpTimeout": 5
   },
   "dev": {
@@ -39,6 +40,7 @@
     "virtualEnvironment": "hazus_env",
     "condaChannel": "nhrap-dev",
     "pythonPackage": "hazpy",
+    "pythonVersion": "3.7",
     "httpTimeout": 5
   },
   "proxies": {

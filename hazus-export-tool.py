@@ -16,13 +16,16 @@ try:
     res = call('CALL conda.bat activate ' + virtual_env, shell=True)
     if res == 1:
         # create the virtual environment
-        from src.manage import createHazPyEnvironment
+        try:
+            from src.manage import createHazPyEnvironment
+        except:
+            from manage import createHazPyEnvironment
         createHazPyEnvironment()
     else:
         call('CALL conda.bat activate '+virtual_env +
              ' && start /min python src/app.py', shell=True)
-        # call('CALL conda.bat activate '+virtual_env +
-        #      ' && start /min python src/update.py', shell=True)
+        call('CALL conda.bat activate '+virtual_env +
+             ' && start /min python src/update.py', shell=True)
 except:
     import ctypes
     import sys
