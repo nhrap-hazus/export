@@ -125,18 +125,21 @@ def checkForHazPyUpdates():
         installedVersion = pkg_resources.get_distribution(python_package).version
         handleProxy()
         req = requests.get(hazpy_version_url, timeout=http_timeout)
+        status = req.status_code
 
-        newestVersion = parseVersionFromInit(req.text)
-        newestVersion = 'abd'
-        if newestVersion != installedVersion:
-            returnValue = messageBox(None, u"A new version of the " + python_package +
-                                     u" python package was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
-            if returnValue == 6:
-                messageBox(
-                    0, u'Updates are installing. We will let you know when its done!', u"HazPy", 0x1000)
-                condaInstallHazPy()
+        if status == 200:
+            newestVersion = parseVersionFromInit(req.text)
+            if newestVersion != installedVersion:
+                returnValue = messageBox(None, u"A new version of the " + python_package +
+                                        u" python package was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
+                if returnValue == 6:
+                    messageBox(
+                        0, u'Updates are installing. We will let you know when its done!', u"HazPy", 0x1000)
+                    condaInstallHazPy()
+            else:
+                print(python_package + ' is up to date')
         else:
-            print(python_package + ' is up to date')
+            print('Unable to connect to the url: ' + hazpy_version_url)
     except:
         createHazPyEnvironment()
 
@@ -151,20 +154,22 @@ def checkForToolUpdates():
 
         handleProxy()
         req = requests.get(tool_version_url, timeout=http_timeout)
+        status = req.status_code
 
-        newestVersion = parseVersionFromInit(req.text)
-        if newestVersion != installedVersion:
-            returnValue = messageBox(
-                None, u"A new version of the tool was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
-            if returnValue == 6:
-                print('updating tool')
-                updateTool()
+        if status == 200:
+            newestVersion = parseVersionFromInit(req.text)
+            if newestVersion != installedVersion:
+                returnValue = messageBox(
+                    None, u"A new version of the tool was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
+                if returnValue == 6:
+                    print('updating tool')
+                    updateTool()
+            else:
+                print('Tool is up to date')
         else:
-            print('Tool is up to date')
+            print('Unable to connect to url: ' + tool_version_url)
     except:
-        # testing pass
-        pass
-        # messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "HazPy", 0x1000)
+        messageBox(0, 'Unable to check for tool updates. If this error persists, contact hazus-support@riskmapcds.com for assistance.', "HazPy", 0x1000)
 
 
 def updateTool():
