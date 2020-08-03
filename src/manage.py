@@ -127,6 +127,7 @@ def checkForHazPyUpdates():
         req = requests.get(hazpy_version_url, timeout=http_timeout)
 
         newestVersion = parseVersionFromInit(req.text)
+        newestVersion = 'abd'
         if newestVersion != installedVersion:
             returnValue = messageBox(None, u"A new version of the " + python_package +
                                      u" python package was found. Would you like to install it now?", u"HazPy", 0x1000 | 0x4)
