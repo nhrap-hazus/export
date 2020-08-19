@@ -47,6 +47,6 @@
     "fema": "http://proxy.apps.dhs.gov:80"
   },
   "extras": {
-    "draftEmail": true
+    "draftEmail": false
   }
 }

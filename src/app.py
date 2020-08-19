@@ -126,6 +126,18 @@ class App():
                     None, u"Please select these required fields prior to exporting: {e}".format(e=self.selection_errors), u'HazPy - Message', 0)
                 return None
 
+            # (extra) draft email if the checkbox is selected
+            try:
+                if 'opt_draftEmail' in dir(self):
+                    if self.exportOptions['draftEmail']:
+                        draftEmail(self.studyRegion)
+                    # return if only draftEmail is checked
+                    if self.exportOptions['csv'] + self.exportOptions['shapefile'] + self.exportOptions['geojson'] + self.exportOptions['report'] == 0:
+                        tk.messagebox.showinfo("HazPy", "Complete - Draft email can be found in the draft folder of Outlook")
+                        return
+            except:
+                print('unable to draft email')
+
             # add progress bar
             self.addWidget_progress()
 
@@ -162,13 +174,6 @@ class App():
                         'HazPy', 'No results found. Please check your study region and try again.')
             except:
                 ctypes.windll.user32.MessageBoxW(None, u"Unexpected error retrieving base results: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
-
-            # (extra) draft email if the checkbox is selected
-            try:
-                if self.exportOptions['draftEmail']:
-                    draftEmail()
-            except:
-                print('unable to draft email')
 
             # export study region to csv if the checkbox is selected
             if self.exportOptions['csv']:
@@ -350,11 +355,6 @@ class App():
             self.exportOptions['shapefile'] = self.opt_shp.get()
             self.exportOptions['geojson'] = self.opt_geojson.get()
             self.exportOptions['report'] = self.opt_report.get()
-            # try/except, because this option is loaded as an extra
-            try:
-                self.exportOptions['draftEmail'] = self.opt_draftEmail.get()
-            except:
-                pass
 
             # validates if the sum is greater than zero - if selected, they each checkbox will have a value of 1
             exportOptionsCount = sum([x for x in self.exportOptions.values()])
@@ -369,6 +369,13 @@ class App():
                 self.selection_errors.append('output directory')
                 validated = False
             
+            # (extra) validate only if exists - MUST be last in validation
+            if 'opt_draftEmail' in dir(self):
+                val = self.opt_draftEmail.get()
+                self.exportOptions['draftEmail'] = val
+                if val == 1:
+                    validated = True
+
             return validated
         except:
             # validation check fails

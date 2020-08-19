@@ -77,18 +77,20 @@ class StudyRegionDataFrame(pd.DataFrame):
             temp_df = self.copy()
             if not 'county' in temp_df.columns:
                 if not 'tract' in temp_df.columns:
-                    sql = """SELECT [CensusBlock] as block ,[Tract] as tract FROM {s}.[dbo].[hzCensusBlock]""".format(s=self.studyRegion)
+                    sql = """SELECT [CensusBlock] as block, [Tract] as tract FROM {s}.[dbo].[hzCensusBlock]""".format(s=self.studyRegion)
                     update_df = self.query(sql)
                     temp_df = pd.merge(update_df, temp_df, on="block")
-                sql = """SELECT [Tract] as tract ,[CountyFips] as county FROM {s}.[dbo].[hzTract]""".format(s=self.studyRegion)
+                sql = """SELECT [Tract] as tract, [CountyFips] as countyfips FROM {s}.[dbo].[hzTract]""".format(s=self.studyRegion)
                 update_df = self.query(sql)
                 temp_df = pd.merge(update_df, temp_df, on="tract")
 
-            sql = """SELECT CountyFips as county, CountyName as name, Shape.STAsText() AS geometry FROM {s}.dbo.hzCounty""".format(
-                s=self.studyRegion)
+            sql = """select state, county, countyfips, geometry from 
+                    (SELECT State as stateid, CountyFips as countyfips, CountyName as county, Shape.STAsText() AS geometry FROM {s}.dbo.hzCounty) c
+                    inner join (select StateID as stateid, StateName as state FROM [syHazus].[dbo].[syState]) s
+                    on c.stateid = s.stateid""".format(s=self.studyRegion) 
 
             update_df = self.query(sql)
-            temp_df = pd.merge(update_df, temp_df, on="county")
+            temp_df = pd.merge(update_df, temp_df, on="countyfips")
             return StudyRegionDataFrame(self, temp_df)
         except:
             print("Unexpected error:", sys.exc_info()[0])
