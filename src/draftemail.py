@@ -157,7 +157,7 @@ def draftEmail(studyRegion):
             <html>
             <body>
             <p>Greetings,</p>
-            <p>The Hazus team has completed wind loss modeling for Hurricane [HURRICANE_NAME] based on Advisory [ADVISORY_NUMBER]. Hazus does not generate impact assessments for wind below 50 mph; therefore, locations with lower windspeeds were excluded from the model.  Attached are Hazus results and a snapshot summary is below:</p>
+            <p>We have completed wind loss modeling for Hurricane [HURRICANE_NAME] based on Advisory [ADVISORY_NUMBER]. Hazus does not generate impact assessments for wind below 50 mph; therefore, locations with lower windspeeds were excluded from the model.  Attached are Hazus results and a snapshot summary is below:</p>
             <strong>Hurricane [HURRICANE_NAME] Hazus Hurricane Wind Loss Modeling for Advisory [ADVISORY_NUMBER] Loss Summary</strong>
             """+resultsHTML+"""
             </body>
