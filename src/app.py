@@ -650,11 +650,11 @@ class App():
             self.value_hazard = StringVar(name='hazard')
             self.value_hazard.trace('w', self.handle_hazard)
 
-            self.options_scenario = ['a', 'b', 'c']
+            self.options_scenario = []
             self.value_scenario = StringVar(name='scenario')
             self.value_scenario.trace(W, self.handle_scenario)
 
-            self.options_returnPeriod = ['a', 'b', 'c']
+            self.options_returnPeriod = []
             self.value_returnPeriod = StringVar(name='returnPeriod')
             self.value_returnPeriod.trace(W, self.handle_returnPeriod)
 
