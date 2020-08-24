@@ -1,6 +1,7 @@
 import ctypes
 import sys
 from hazpy.legacy import StudyRegion, getStudyRegions
+from draftemail import draftEmail
 import os
 import tkinter as tk
 from tkinter import messagebox
@@ -27,10 +28,10 @@ class App():
         # self.root.grid_propagate(0)
 
         # load config
-        config = json.loads(open('src/config.json').read())
+        self.config = json.loads(open('src/config.json').read())
 
         # global styles
-        self.globalStyles = config['themes'][config['activeTheme']]
+        self.globalStyles = self.config['themes'][self.config['activeTheme']]
         self.backgroundColor = self.globalStyles['backgroundColor']
         self.foregroundColor = self.globalStyles['foregroundColor']
         self.hoverColor = self.globalStyles['hoverColor']
@@ -124,6 +125,18 @@ class App():
                 ctypes.windll.user32.MessageBoxW(
                     None, u"Please select these required fields prior to exporting: {e}".format(e=self.selection_errors), u'HazPy - Message', 0)
                 return None
+
+            # (extra) draft email if the checkbox is selected
+            try:
+                if 'opt_draftEmail' in dir(self):
+                    if self.exportOptions['draftEmail']:
+                        draftEmail(self.studyRegion)
+                    # return if only draftEmail is checked
+                    if self.exportOptions['csv'] + self.exportOptions['shapefile'] + self.exportOptions['geojson'] + self.exportOptions['report'] == 0:
+                        tk.messagebox.showinfo("HazPy", "Complete - Draft email can be found in the draft folder of Outlook")
+                        return
+            except:
+                print('unable to draft email')
 
             # add progress bar
             self.addWidget_progress()
@@ -356,6 +369,13 @@ class App():
                 self.selection_errors.append('output directory')
                 validated = False
             
+            # (extra) validate only if exists - MUST be last in validation
+            if 'opt_draftEmail' in dir(self):
+                val = self.opt_draftEmail.get()
+                self.exportOptions['draftEmail'] = val
+                if val == 1:
+                    validated = True
+
             return validated
         except:
             # validation check fails
@@ -416,6 +436,11 @@ class App():
             self.removeWidget_report()
         if val == 1:
             self.addWidget_report(self.row_report)  
+
+    def handle_draftEmailCheckbox(self):
+        """handles the draft email checkbox"""
+        val = self.opt_draftEmail.get()
+
 
     def addWidget_hazard(self, row):
         """adds the hazard dropdown widget"""
@@ -690,6 +715,13 @@ class App():
             ttk.Checkbutton(self.root, text="Report", variable=self.opt_report, style='BW.TCheckbutton', command=self.handle_reportCheckbox).grid(
                 row=self.row, column=1, padx=(xpadl, 0), pady=0, sticky=W)
             self.row += 1
+            # (extra) draft email
+            if self.config['extras']['draftEmail']:
+                self.opt_draftEmail = tk.IntVar(value=1)
+                ttk.Checkbutton(self.root, text="Draft Email", variable=self.opt_draftEmail, style='BW.TCheckbutton', command=self.handle_draftEmailCheckbox).grid(
+                    row=self.row, column=1, padx=(xpadl, 0), pady=0, sticky=W)
+                self.row += 1
+
 
             # hazard
             self.row_hazard = self.row
