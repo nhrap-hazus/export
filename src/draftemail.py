@@ -129,7 +129,7 @@ def draftEmail(studyRegion):
                                 <li>{dcs} tons of Concrete/Steel Debris</li>
                                 <li>{dt} tons of Tree Debris</li>
                                 <ul>
-                                    <li>{det} tons of Eligible Tree Debris</li>
+                                    <li>Includes {det} tons of Eligible Tree Debris</li>
                                 </ul>
                             </ul>
                         </ul>
