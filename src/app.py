@@ -281,8 +281,7 @@ class App():
                     reportSubtitle = self.text_reportSubtitle.get("1.0", 'end-1c')
                     if len(reportSubtitle) > 0:
                         self.studyRegion.report.subtitle = reportSubtitle
-                    self.studyRegion.report.buildPremade()
-                    self.studyRegion.report.save(outputPath + '/report_summary.pdf')
+                    self.studyRegion.report.save(outputPath + '/report_summary.pdf', build=True)
                 except:
                     ctypes.windll.user32.MessageBoxW(
                         None, u"Unexpected error exporting the PDF: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
@@ -650,11 +649,11 @@ class App():
             self.value_hazard = StringVar(name='hazard')
             self.value_hazard.trace('w', self.handle_hazard)
 
-            self.options_scenario = ['a', 'b', 'c']
+            self.options_scenario = []
             self.value_scenario = StringVar(name='scenario')
             self.value_scenario.trace(W, self.handle_scenario)
 
-            self.options_returnPeriod = ['a', 'b', 'c']
+            self.options_returnPeriod = []
             self.value_returnPeriod = StringVar(name='returnPeriod')
             self.value_returnPeriod.trace(W, self.handle_returnPeriod)
 
