@@ -6,7 +6,7 @@ The Hazus Export Tool is developed using the Hazus Python Package, HazPy. HazPy 
 
 ## Requirements
 
-The HHIT requires Hazus, ArcGIS Desktop, Anaconda, and an active internet connection. Anaconda is a free software that automatically manages Python packages required to run Hazus open source tools, including the Hazus Python package: https://fema-nhrap.s3.amazonaws.com/Hazus/Python/build/html/index.html
+The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be installed on your computer. Anaconda is a free software that automatically manages all Python packages required to run Hazus open source tools - including the Hazus Python package: https://fema-nhrap.s3.amazonaws.com/Hazus/Python/build/html/index.html
 
 1. Go to https://www.anaconda.com/distribution/
 
@@ -16,7 +16,6 @@ The HHIT requires Hazus, ArcGIS Desktop, Anaconda, and an active internet connec
 
    - [x] **Add Anaconda to my PATH environment variable**
    - [x] Register Anaconda as my default Python
-   - [x] Install Anaconda for local user, rather than all users
 
 ## Documentation
 
@@ -29,8 +28,6 @@ Issues can be reported through the repository on Github (https://github.com/nhra
 For questions contact hazus-support@riskmapcds.com
 
 ## To Use
-
-**Must have Anaconda 3.7 installed. Please read requirements**
 
 Follow the steps below to run FAST. To ensure .py files run when double-clicked, right-click the .py file and go to Properties. Under the "General" tab next to "Opens With", make sure "python.exe" is selected. If not, click "Change" and select "python.exe" from your Python installation directory.
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    hazus
+    HazPy
     ~~~~~
 
     FEMA developed module for analzying risk and loss from natural hazards.
@@ -10,5 +10,5 @@
     :author: James Raines; james.rainesii@fema.dhs.gov
 """
 
-__version__ = '0.0.3'
+__version__ = '1.0.0'
 __all__ = ['']
