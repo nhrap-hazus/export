@@ -281,8 +281,7 @@ class App():
                     reportSubtitle = self.text_reportSubtitle.get("1.0", 'end-1c')
                     if len(reportSubtitle) > 0:
                         self.studyRegion.report.subtitle = reportSubtitle
-                    self.studyRegion.report.buildPremade()
-                    self.studyRegion.report.save(outputPath + '/report_summary.pdf')
+                    self.studyRegion.report.save(outputPath + '/report_summary.pdf', build=True)
                 except:
                     ctypes.windll.user32.MessageBoxW(
                         None, u"Unexpected error exporting the PDF: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
