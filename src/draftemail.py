@@ -49,8 +49,8 @@ def draftEmail(studyRegion):
         return dollars
 
     def getResidentalDamageCounts():
-        sql="""select p.tract, affected * RESI as affected, minor * RESI as minor, majoranddestroyed * RESI as majoranddestroyed from 
-            (select TRACT as tract, avg(MINOR) as affected, avg(MODERATE) as minor, avg(SEVERE + COMPLETE) as majoranddestroyed FROM [{s}].[dbo].[huOccResultsT]
+        sql="""select p.tract, affected * RESI as affected, minor * RESI as minor, major * RESI as major, destroyed * RESI as destroyed from 
+            (select TRACT as tract, avg(MINOR) as affected, avg(MODERATE) as minor, avg(SEVERE) as major, avg(COMPLETE) as destroyed FROM [{s}].[dbo].[huOccResultsT]
             where Occupancy = 'RES'
             group by tract) p
             inner join
@@ -85,13 +85,14 @@ def draftEmail(studyRegion):
                     econloss += html
 
                 # residential building damage counts
-                res_affected = abbreviateValue(slice_grouped['affected'].sum())
-                res_minor = abbreviateValue(slice_grouped['minor'].sum())
-                res_majoranddestroyed = abbreviateValue(slice_grouped['majoranddestroyed'].sum())
+                res_affected = addCommas(slice_grouped['affected'].sum(), truncate=True)
+                res_minor = addCommas(slice_grouped['minor'].sum(), truncate=True)
+                res_major = addCommas(slice_grouped['major'].sum(), truncate=True)
+                res_destroyed = addCommas(slice_grouped['destroyed'].sum(), truncate=True)
 
                 # displaced households and shelter needs
-                displacedHouseholds = abbreviateValue(slice_grouped['DisplacedHouseholds'].sum())
-                shelterNeeds = abbreviateValue(slice_grouped['ShelterNeeds'].sum())
+                displacedHouseholds = addCommas(slice_grouped['DisplacedHouseholds'].sum(), truncate=True)
+                shelterNeeds = addCommas(slice_grouped['ShelterNeeds'].sum(), truncate=True)
 
                 # debris
                 total_debris = abbreviateValue(slice_grouped['DebrisTotal'].sum())
@@ -115,8 +116,9 @@ def draftEmail(studyRegion):
                             <li>Number of Residential Buildings Damaged</li>
                             <ul class="results-details">
                                 <li>Affected – {resa}</li>
-                                <li>Minor – {resm}</li>
-                                <li>Major/Destroyed – {resd}</li>
+                                <li>Minor – {resmin}</li>
+                                <li>Major – {resmaj}</li>
+                                <li>Destroyed – {resdes}</li>
                             </ul>
                         </ul>
                         <ul class="results">
@@ -127,14 +129,11 @@ def draftEmail(studyRegion):
                             <ul class="results-details">
                                 <li>{dbw} tons of Brick/Wood Debris</li>
                                 <li>{dcs} tons of Concrete/Steel Debris</li>
-                                <li>{dt} tons of Tree Debris</li>
-                                <ul>
-                                    <li>Includes {det} tons of Eligible Tree Debris</li>
-                                </ul>
+                                <li>{dt} tons of Tree Debris ({det} tons of tree debris on or near public right-of-way)</li>
                             </ul>
                         </ul>
                     </ul>
-                        """.format(resa=res_affected, resm=res_minor, resd=res_majoranddestroyed, dh=displacedHouseholds, sn=shelterNeeds, td=total_debris, dbw=debris_bw, dcs=debris_cs, dt=debris_tree, det=debris_eligibleTree)
+                        """.format(resa=res_affected, resmin=res_minor, resmaj=res_major, resdes=res_destroyed, dh=displacedHouseholds, sn=shelterNeeds, td=total_debris, dbw=debris_bw, dcs=debris_cs, dt=debris_tree, det=debris_eligibleTree)
                 resultsHTML += update_html
 
             HTML = """
