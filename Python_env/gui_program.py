@@ -56,13 +56,13 @@ class App():
         self.root.configure(background=self.backgroundColor,highlightcolor='#fff')
 
         # App images
-        self.root.wm_iconbitmap('src/assets/images/Hazus.ico')
+        self.root.wm_iconbitmap('Python_env/assets/images/Hazus.ico')
         self.img_data = ImageTk.PhotoImage(Image.open(
-            "src/assets/images/data_blue.png").resize((20, 20), Image.BICUBIC))
+            "Python_env/assets/images/data_blue.png").resize((20, 20), Image.BICUBIC))
         self.img_edit = ImageTk.PhotoImage(Image.open(
-            "src/assets/images/edit_blue.png").resize((20, 20), Image.BICUBIC))
+            "Python_env/assets/images/edit_blue.png").resize((20, 20), Image.BICUBIC))
         self.img_folder = ImageTk.PhotoImage(Image.open(
-            "src/assets/images/folder_icon.png").resize((20, 20), Image.BICUBIC))
+            "Python_env/assets/images/folder_icon.png").resize((20, 20), Image.BICUBIC))
 
         # Init dynamic row
         self.row = 0
