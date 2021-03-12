@@ -124,6 +124,7 @@ dependencies:
   - python-dateutil=2.8.1=py_0
   - python_abi=3.9=1_cp39
   - pytz=2021.1=pyhd8ed1ab_0
+  - pywin32=300=py39hb82d6ee_0
   - qt=5.12.9=hb2cf2c5_0
   - rasterio=1.1.8=py39hfec4536_0
   - reportlab=3.5.60=py39h12d40c5_0
