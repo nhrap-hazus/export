@@ -1,6 +1,6 @@
 import ctypes
 import sys
-from hazpy.legacy import StudyRegion, getStudyRegions
+from hazpy.legacy import StudyRegion, HazusDB
 from draftemail import draftEmail
 import os
 import tkinter as tk
@@ -641,7 +641,7 @@ class App():
         """
         try:
             # initialize dropdown options
-            options_studyRegion = getStudyRegions()
+            options_studyRegion = HazusDB().getStudyRegions()
             self.value_studyRegion = StringVar(name='studyRegion')
             self.value_studyRegion.trace('w', self.handle_studyRegion)
 
