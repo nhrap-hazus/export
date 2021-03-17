@@ -25,7 +25,7 @@ For information about the fields, values and units found in exported Hazus resul
 
 Issues can be reported through the repository on Github (https://github.com/nhrap-hazus/export)
 
-For questions contact hazus-support@riskmapcds.com
+For questions contact fema-hazus-support@fema.dhs.gov
 
 ## To Use
 
