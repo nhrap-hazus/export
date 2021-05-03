@@ -382,7 +382,7 @@ if __name__ == '__main__':
     if len(hprList) > 0:
         print(f'Processing HPRs...')
         for hpr in hprList:
-            exportHPR(hpr, outDir)
+            exportHPR(str(hpr), outDir)
         print()
     else:
         print('no HPR files found')
