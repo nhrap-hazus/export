@@ -29,7 +29,7 @@ def exportHPR(hprFile, outputDir):
         
 
         Keyword Arguments:
-            hprFile: str -- a directory path containing hpr files
+                hprFile: str -- a directory path containing hpr files
             outputDir: str -- a directory to write export files to
 
         Notes: The hazpy legacy code has only been tested against USGS FIM
@@ -39,12 +39,12 @@ def exportHPR(hprFile, outputDir):
     """
     hpr = HazusPackageRegion(hprFilePath=hprFile, outputDir=outputDir)
 
-    print(hpr.hprFilePath)
-    print(hpr.outputDir)
-    print(hpr.tempDir)
-    print(hpr.hprComment)
-    print(hpr.HazusVersion)
-    print(hpr.Hazards)
+    print(f"User Defined hprFilePath: {hpr.hprFilePath}") #debug
+    print(f"User Defined outputDir = {hpr.outputDir}") #debug
+    print(f"tempDir = {hpr.tempDir}") #debug
+    print(f"hpr zipfile comment: {hpr.hprComment}") #debug
+    print(f"Hazus Version: {hpr.HazusVersion}") #debug
+    print(f"Available Hazards: {hpr.Hazards}") #debug
     print()
 
     try:
@@ -53,6 +53,7 @@ def exportHPR(hprFile, outputDir):
         print(e)
 
     hpr.getHazardsScenariosReturnPeriods()
+    print(hpr.HazardsScenariosReturnPeriods) #debug
 
     #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS...
     outputPath = hpr.outputDir
@@ -97,7 +98,7 @@ def exportHPR(hprFile, outputDir):
 
     #ITERATE OVER THE HAZARD, SCENARIO, RETURNPERIOD AVAIALABLE COMBINATIONS...
     for hazard in hpr.HazardsScenariosReturnPeriods:
-        print(hazard['Hazard'])
+        print(f"Hazard: {hazard['Hazard']}") #debug
 
         #ADD ROW TO hllMetadataEvent TABLE...
         hazardUUID = uuid.uuid4()
@@ -107,7 +108,7 @@ def exportHPR(hprFile, outputDir):
 
         #SCENARIOS/ANALYSIS
         for scenario in hazard['Scenarios']:
-            print(scenario['ScenarioName'])
+            print(f"Scenario: {scenario['ScenarioName']}") #debug
 
             #ADD ROW TO hllMetadataScenario TABLE...
             scenarioUUID = uuid.uuid4()
@@ -124,13 +125,13 @@ def exportHPR(hprFile, outputDir):
                                                               'meta':scenarioMETA}, ignore_index=True)
             #RETURNPERIODS/DOWNLOAD
             for returnPeriod in scenario['ReturnPeriods']:
-                print(returnPeriod)
+                print(f"returnPeriod: {returnPeriod}") #debug
 
                 #SET HPR HAZARD, SCENARIO, RETURNPERIOD...
                 hpr.hazard = hazard['Hazard']
                 hpr.scenario = scenario['ScenarioName']
                 hpr.returnPeriod = returnPeriod
-                print(hpr.hazard, hpr.scenario, hpr.returnPeriod)
+                print(f"hazard = {hpr.hazard}, scenario= {hpr.scenario}, returnPeriod = {hpr.returnPeriod}") #debug
 
                 #GET BULK OF RESULTS...
                 try:
@@ -314,9 +315,9 @@ def exportHPR(hprFile, outputDir):
                         print('Writing ImpactArea to geojson...')
                         econloss = hpr.getEconomicLoss()
                         if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
-                            econloss.toHLLGeoJSON(Path.joinpath(exportPath, 'econloss_simpconvexHLL.geojson'))
+                            econloss.toHLLGeoJSON(Path.joinpath(exportPath, 'impactarea.geojson'))
                             #ADD ROW TO hllMetadataDownload TABLE...
-                            filePath = Path.joinpath(exportPath, 'econloss_simpconvexHLL.geojson')
+                            filePath = Path.joinpath(exportPath, 'impactarea.geojson')
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                             hllMetadataDownload = hllMetadataDownload.append({'category':returnPeriod,
                                                                               'subcategory':'Results',
@@ -382,7 +383,11 @@ if __name__ == '__main__':
     if len(hprList) > 0:
         print(f'Processing HPRs...')
         for hpr in hprList:
-            exportHPR(str(hpr), outDir)
+            try:
+                exportHPR(str(hpr), outDir)
+            except Exception as e:
+                print('Exception:')
+                print(e)
         print()
     else:
         print('no HPR files found')
