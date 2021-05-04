@@ -131,7 +131,7 @@ def exportHPR(hprFile, outputDir):
                 hpr.hazard = hazard['Hazard']
                 hpr.scenario = scenario['ScenarioName']
                 hpr.returnPeriod = returnPeriod
-                print(f"hazard = {hpr.hazard}, scenario= {hpr.scenario}, returnPeriod = {hpr.returnPeriod}") #debug
+                print(f"hazard = {hpr.hazard}, scenario = {hpr.scenario}, returnPeriod = {hpr.returnPeriod}") #debug
 
                 #GET BULK OF RESULTS...
                 try:
@@ -292,7 +292,7 @@ def exportHPR(hprFile, outputDir):
                         print('Damaged facilities not available to export to geojson.')
                         print(e)
 
-                    if hazard == 'flood':
+                    if hazard['Hazard'] == 'flood':
                         try:
                             print('Writing Flood Hazard Boundary Polygon to shapefile...')
                             hpr.getFloodBoundaryPolyName('R')
