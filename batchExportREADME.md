@@ -29,9 +29,9 @@ Table of possible Hazard/Scenario/Scenario Type/Return Period combinations:
 |---     |---   |---     |---          |---          |
 |studyregion1|EQ|1: user defined name?|probabilistic|8: 100, 250, 500, 750, 1000, 1500, 2000, 2500|
 |studyregion1|EQ|1: user defined name?|deterministic|1: user defined name?|
-|studyregion1|FL|StudyCase: user defined name?|riverine|1 to many: user defined name?|
-|studyregion1|FL|StudyCase: user defined name?|coastal|1 to many: user defined name?|
-|studyregion1|FL|StudyCase: user defined name?|riverine & coastal|1 to many: user defined?|
+|studyregion1|FL|StudyCase: user defined name?|riverine|1+: user defined name?|
+|studyregion1|FL|StudyCase: user defined name?|coastal|1+: user defined name?|
+|studyregion1|FL|StudyCase: user defined name?|riverine & coastal|1+: user defined name?|
 |studyregion1|FL|StudyCase: user defined name?|surge|1: user defined name?|
 |studyregion1|HU|1: user defined name?|probabilistic|7: 10, 20, 50, 100, 200, 500, 1000|
 |studyregion1|HU|1: user defined name?|deterministic|1: user defined name?|
