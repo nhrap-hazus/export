@@ -110,7 +110,7 @@ def exportHPR(hprFile, outputDir):
             #ADD ROW TO hllMetadataScenario TABLE...
             scenarioUUID = uuid.uuid4()
             #need to get analysis geometric boundary in geojson 4326, can be path to file?
-            scenarioMETA = str({"HazusVersion":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
+            scenarioMETA = str({"Hazus Version":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
             hllMetadataScenario = hllMetadataScenario.append({'id':scenarioUUID,
                                                               'name':scenario['ScenarioName'],
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
