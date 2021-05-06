@@ -47,24 +47,52 @@ For questions contact fema-hazus-support@fema.dhs.gov
 
 ## To Use
 
-Follow the steps below to run FAST. To ensure .py files run when double-clicked, right-click the .py file and go to Properties. Under the "General" tab next to "Opens With", make sure "python.exe" is selected. If not, click "Change" and select "python.exe" from your Python installation directory.
+**PART 1**
 
-**1. In the Export/python_env folder there is a python file named batchExport, open it and modify the User Defined Variables**
+**1. Download and unzip the "export-Feature-BatchExport" Code from https://github.com/nhrap-dev/export/tree/Feature-BatchExport**
+
+**PART 2**
+
+**1. Download and unzip "hazpy-Feature-BatchExport" Code from https://github.com/nhrap-dev/hazpy/tree/Feature-BatchExport**
+
+**2. In the unzipped "export-Feature-BatchExport", in the "export\Python_env" directory, copy the python script named 'batchExport.py'.**
+
+    For Example: "C:\Users\Clindeman\Downloads\export-Feature-BatchExport\export-Feature-BatchExport\Python_env"
+
+**3. Paste the python script 'batchExport.py' into the unzipped "hazpy-Feature-BatchExport" folder.**
+
+    For Example: "C:\Users\Clindeman\Downloads\hazpy-Feature-BatchExport\hazpy-Feature-BatchExport"
+
+**PART 3**
+
+**1. Open the python file named "batchExport.py" in the "hazpy-Feature-BatchExport" folder and modify the User Defined Variables:**
     
-    Modify the directory path containing the HPR files to batch export
+   Modify the directory path containing the HPR files you want to batch export:
+
+    hprDir = r'C:/workspace/hpr'               #The directory containing hpr files 
     
-    Modify the directory path for the output of the batch export
+   Modify the directory path for the batchExport output to where you want them to be saved to:
+    
+    outDir = r'C:/workspace/batchexportOutput' #The directory for the output files 
 
 **2. Open Anaconda desktop and select the 'hazus_env' environment**
 
+![Anaconda hazus_env terminal](Images/BatchExport_Select_hazus_env.png "Anaconda hazus_env terminal")
+
 **3. 'Open Terminal' from 'hazus_env'**
 
-**4. In the hazus_env terminal change directory to the location you've downloaded the export tool to**
+![Anaconda hazus_env terminal](Images/BatchExport_OpenTerminal.png "Anaconda hazus_env terminal")
 
-    type: 'cd C:/mydownloads/export/Python_env' into the terminal and hit enter
+**4. In the hazus_env terminal, change the current working directory to the directory you've unzipped the "hazpy-Feature-BatchExport" to:**
 
-**5. In the terminal run the batchExport.py script**
+Type the following into the terminal and hit enter: 
     
-    type: 'python batchExport.py'
+    'cd C:/mydownloads/export/Python_env' 
+
+**5. In the terminal run the "batchExport.py" script:**
+    
+Type the following into the terminal and hit enter: 
+
+    'python batchExport.py'
 
 
