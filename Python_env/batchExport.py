@@ -157,7 +157,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'results.csv',
+                                                                          'name':'Results.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -176,7 +176,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'building_damage_by_occupancy.csv',
+                                                                          'name':'Building damage by occupancy.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -195,7 +195,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'building_damage_by_type.csv',
+                                                                          'name':'Building damage by type.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -213,7 +213,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'damaged_facilities.csv',
+                                                                          'name':'Damaged facilities.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -239,7 +239,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'results.shp',
+                                                                          'name':'Results.shp',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -261,7 +261,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'damaged_facilities.shp',
+                                                                          'name':'Damaged facilities.shp',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -285,7 +285,7 @@ def exportHPR(hprFile, outputDir):
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
                                                                               'subcategory':'Results',
-                                                                              'name':'hazardBoundaryPoly.shp',
+                                                                              'name':'Hazard Boundary.shp',
                                                                               'icon':'spatial',
                                                                               'file':filePathRel,
                                                                               'analysis':scenarioUUID}, ignore_index=True)
@@ -311,7 +311,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'results.geojson',
+                                                                          'name':'Results.geojson',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -329,7 +329,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
-                                                                          'name':'damaged_facilities.geojson',
+                                                                          'name':'Damaged facilities.geojson',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -349,7 +349,7 @@ def exportHPR(hprFile, outputDir):
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
                                                                               'subcategory':'Results',
-                                                                              'name':'impactarea.geojson',
+                                                                              'name':'Impact area.geojson',
                                                                               'icon':'spatial',
                                                                               'file':filePathRel,
                                                                               'analysis':scenarioUUID}, ignore_index=True)
