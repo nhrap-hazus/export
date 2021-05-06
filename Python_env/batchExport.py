@@ -227,11 +227,14 @@ def exportHPR(hprFile, outputDir):
                 #EXPORT Hazus Package Region TO Shapefile...
                 try:
                     try:
-                        print('Writing results to shapefile...')
-                        results.toShapefile(Path.joinpath(exportPath, 'results.shp'))
+                        #print('Writing results to shapefile...')
+                        print('Writing results to shapefile to zipfile...')
+                        #results.toShapefile(Path.joinpath(exportPath, 'results.shp'))
+                        results.toShapefiletoZipFile(Path.joinpath(exportPath, 'results.shp'))
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'results.shp')
+                        #filePath = Path.joinpath(exportPath, 'results.shp')
+                        filePath = Path.joinpath(exportPath, 'results.zip')
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
@@ -241,15 +244,19 @@ def exportHPR(hprFile, outputDir):
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
                     except Exception as e:
-                        print('Base results not available to export to shapefile...')
+                        #print('Base results not available to export to shapefile...')
+                        print('Base results not available to export to shapefile to zipfile...')
                         print(e)
                         
                     try:
-                        print('Writing Damaged facilities to shapefile.')
-                        essentialFacilities.toShapefile(Path.joinpath(exportPath, 'damaged_facilities.shp'))
+                        #print('Writing Damaged facilities to shapefile.')
+                        print('Writing Damaged facilities to shapefile to zipfile.')
+                        #essentialFacilities.toShapefile(Path.joinpath(exportPath, 'damaged_facilities.shp'))
+                        essentialFacilities.toShapefiletoZipFile(Path.joinpath(exportPath, 'damaged_facilities.shp'))
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'damaged_facilities.shp')
+                        #filePath = Path.joinpath(exportPath, 'damaged_facilities.shp')
+                        filePath = Path.joinpath(exportPath, 'damaged_facilities.zip')
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
@@ -259,12 +266,38 @@ def exportHPR(hprFile, outputDir):
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
                     except Exception as e:
-                        print('Damaged facilities not available to export to shapefile...')
+                        #print('Damaged facilities not available to export to shapefile...')
+                        print('Damaged facilities not available to export to shapefile to zipfile...')
                         print(e)
+
+                    if hazard['Hazard'] == 'flood':
+                        try:
+                            #print('Writing Flood Hazard Boundary Polygon to shapefile...')
+                            print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
+                            hpr.getFloodBoundaryPolyName('R')
+                            #hpr.exportFloodHazardPolyToShapefile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
+                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            #filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.shp')
+                            filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':returnPeriod,
+                                                                              'subcategory':'Results',
+                                                                              'name':'hazardBoundaryPoly.shp',
+                                                                              'icon':'spatial',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('Writing Hazard not available to export to shapefile...')
+                            print(e)
                         
                 except Exception as e:
                     print(u"Unexpected error exporting Shapefile: ")
                     print(e)
+
+
                     
                 #EXPORT Hazus Package Region TO GeoJSON...
                 try:
@@ -302,28 +335,7 @@ def exportHPR(hprFile, outputDir):
                                                                           'analysis':scenarioUUID}, ignore_index=True)
                     except Exception as e:
                         print('Damaged facilities not available to export to geojson.')
-                        print(e)
-
-                    if hazard['Hazard'] == 'flood':
-                        try:
-                            print('Writing Flood Hazard Boundary Polygon to shapefile...')
-                            hpr.getFloodBoundaryPolyName('R')
-                            hpr.exportFloodHazardPolyToShapefile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
-                            #ADD ROW TO hllMetadataDownload TABLE...
-                            downloadUUID = uuid.uuid4()
-                            filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.shp')
-                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
-                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                              'category':returnPeriod,
-                                                                              'subcategory':'Results',
-                                                                              'name':'hazardBoundaryPoly.shp',
-                                                                              'icon':'spatial',
-                                                                              'file':filePathRel,
-                                                                              'analysis':scenarioUUID}, ignore_index=True)
-                        except Exception as e:
-                            print('Writing Hazard not available to export to shapefile...')
-                            print(e)
-                        
+                        print(e)                        
 
                     try:
                         print('Writing ImpactArea to geojson...')
