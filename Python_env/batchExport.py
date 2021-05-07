@@ -175,7 +175,7 @@ def exportHPR(hprFile, outputDir):
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
-                                                                          'subcategory':'Results',
+                                                                          'subcategory':'Building Damage',
                                                                           'name':'Building damage by occupancy.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
@@ -194,7 +194,7 @@ def exportHPR(hprFile, outputDir):
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
-                                                                          'subcategory':'Results',
+                                                                          'subcategory':'Building Damage',
                                                                           'name':'Building damage by type.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
@@ -212,7 +212,7 @@ def exportHPR(hprFile, outputDir):
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
-                                                                          'subcategory':'Results',
+                                                                          'subcategory':'Damaged Facilities',
                                                                           'name':'Damaged facilities.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
@@ -260,7 +260,7 @@ def exportHPR(hprFile, outputDir):
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
-                                                                          'subcategory':'Results',
+                                                                          'subcategory':'Damaged Facilities',
                                                                           'name':'Damaged facilities.shp',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
@@ -284,7 +284,7 @@ def exportHPR(hprFile, outputDir):
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
-                                                                              'subcategory':'Results',
+                                                                              'subcategory':'Hazard',
                                                                               'name':'Hazard Boundary.shp',
                                                                               'icon':'spatial',
                                                                               'file':filePathRel,
@@ -328,7 +328,7 @@ def exportHPR(hprFile, outputDir):
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
-                                                                          'subcategory':'Results',
+                                                                          'subcategory':'Damaged Facilities',
                                                                           'name':'Damaged facilities.geojson',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
@@ -348,7 +348,7 @@ def exportHPR(hprFile, outputDir):
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
-                                                                              'subcategory':'Results',
+                                                                              'subcategory':'Hazard',
                                                                               'name':'Impact area.geojson',
                                                                               'icon':'spatial',
                                                                               'file':filePathRel,
