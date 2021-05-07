@@ -114,10 +114,10 @@ def exportHPR(hprFile, outputDir):
             hllMetadataScenario = hllMetadataScenario.append({'id':scenarioUUID,
                                                               'name':scenario['ScenarioName'],
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
-                                                              'analysisType':'FIX ME', #historic, deterministic, probabilistic
-                                                              'date':'FIX ME', #YYYY-MM-DD
-                                                              'source':'FIX ME: USER INPUT NEEDED', #Max100 chars
-                                                              'modifiedInventory':'FIX ME', #true/false
+                                                              'analysisType':'deterministic', #historic, deterministic, probabilistic
+                                                              'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
+                                                              'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
+                                                              'modifiedInventory':'false', #true/false
                                                               'event':hazardUUID,
                                                               'meta':scenarioMETA}, ignore_index=True)
             #RETURNPERIODS/DOWNLOAD
