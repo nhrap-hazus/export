@@ -23,6 +23,28 @@ import os
 import pandas as pd
 import uuid
 
+
+def getflAnalysisLogDate(logfile):
+    """Find the date of analysis from the flAnalysisLog.txt
+
+        Key Argument:
+            logfile: string -- the path to the logfie
+        Returns:
+            analysisLogDate: string -- The date the flAnalysisLog was created in YYYY-MM-DD
+        Notes:
+            1st Line of flAnalysisLog.txt:
+            2021/04/20 11:49:28.227 File: "C:\HazusData\Regions\nora\nora_08\\flAnalysisLog.txt" created on-the-fly from MSSQL
+            
+    """
+    try:
+        file = open(logfile, 'r')
+        analysisLogDate = file.readline()[0:10].replace('/','-')
+        return analysisLogDate
+    except Exception as e:
+        print('Unexpected error getflAnalysisLogDate')
+        print(e)
+        return 'YYYY-MM-DD'
+
 def exportHPR(hprFile, outputDir):
     """This tool will use hazpy.legacy.hazuspackagregion to batch export
         hpr files in a directory to a user specified output directory.
@@ -107,6 +129,12 @@ def exportHPR(hprFile, outputDir):
         for scenario in hazard['Scenarios']:
             print(f"Scenario: {scenario['ScenarioName']}") #debug
 
+            if hazard['Hazard'] == 'flood':
+                #logfile = 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'
+                #breakpoint()
+                logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
+                analysisDate = getflAnalysisLogDate(logfile)
+
             #ADD ROW TO hllMetadataScenario TABLE...
             scenarioUUID = uuid.uuid4()
             #need to get analysis geometric boundary in geojson 4326, can be path to file?
@@ -115,7 +143,8 @@ def exportHPR(hprFile, outputDir):
                                                               'name':scenario['ScenarioName'],
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
                                                               'analysisType':'deterministic', #historic, deterministic, probabilistic
-                                                              'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
+                                                              #'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
+                                                              'date':analysisDate,
                                                               'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
                                                               'modifiedInventory':'false', #true/false
                                                               'event':hazardUUID,
@@ -387,10 +416,10 @@ def exportHPR(hprFile, outputDir):
         print(e)
 
     #DELETE UNZIPPED HPR FOLDER...
-    try:
-        hpr.deleteTempDir()
-    except Exception as e:
-        print(e)
+##    try:
+##        hpr.deleteTempDir()
+##    except Exception as e:
+##        print(e)
 
 
 def aggregateHllMetadataFiles(directory):
@@ -425,8 +454,6 @@ def aggregateHllMetadataFiles(directory):
     except Exception as e:
         print('Unexpected error aggregating HLL Metadata')
         print(e)
-    
-    
         
 if __name__ == '__main__':
     print('Running batch export...')
