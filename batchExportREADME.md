@@ -16,9 +16,11 @@ The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be install
    - [x] **Add Anaconda to my PATH environment variable**
    - [x] Register Anaconda as my default Python
 
-4. Dwnload the zip folder of Export from GitHub and unzip it.
+4. Download the zip folder of Export from GitHub and unzip it.
 
 5. Run the Hazus Export Tool to install hazpy in the hazus_env Anaconda virtual environment (Read the README for the Hazus Export Tool on the steps)
+
+6. If the python package 'xhtml2' is not installed in the Anaconda 'hazus_env' virtual environment you may need to do so manually using Anaconda. It will also install six other required python packages._
 
 ## Documentation
 
