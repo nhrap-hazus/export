@@ -77,7 +77,6 @@ the temp folder that contains the unzipped contents of the HPR file.
 - [ ] EQ impact area and hazard boundary output
 - [ ] HU impact area and hazard boundary output
 - [ ] TS hazard boundary output
-- [ ] Fix potential hazus version lookup error if the hazus version does not exist in the set list
 - [ ] Better script launch steps, i.e. double click one python file to run instead of Anaconda hazus_env terminal.
 
 **Table of Possible Hazard/Scenario/Scenario Type/Return Period Combinations (NOT YET COMPLETE):**
