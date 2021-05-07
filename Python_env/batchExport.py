@@ -22,6 +22,7 @@ from pathlib import Path
 import os
 import pandas as pd
 import uuid
+import sys
 
 
 def getflAnalysisLogDate(logfile):
@@ -144,7 +145,7 @@ def exportHPR(hprFile, outputDir):
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
                                                               'analysisType':'deterministic', #historic, deterministic, probabilistic
                                                               #'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
-                                                              'date':analysisDate,
+                                                              'date':analysisDate, #USGS FIM HPR
                                                               'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
                                                               'modifiedInventory':'false', #true/false
                                                               'event':hazardUUID,
@@ -416,10 +417,10 @@ def exportHPR(hprFile, outputDir):
         print(e)
 
     #DELETE UNZIPPED HPR FOLDER...
-##    try:
-##        hpr.deleteTempDir()
-##    except Exception as e:
-##        print(e)
+    try:
+        hpr.deleteTempDir()
+    except Exception as e:
+        print(e)
 
 
 def aggregateHllMetadataFiles(directory):
@@ -462,6 +463,10 @@ if __name__ == '__main__':
     hprDir = r'C:/workspace/hpr'                    #The directory containing hpr files
     outDir = r'C:/workspace/batchexportOutput'   #The directory for the output files
 
+    #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS...
+    if not os.path.exists(outDir):
+        os.mkdir(outDir)
+
     #print(f'Input Directory: {hprDir}') #debug
     #print(f'Output Directory: {outDir}') #debug
     
@@ -473,13 +478,24 @@ if __name__ == '__main__':
 
     if len(hprList) > 0:
         print(f'Processing HPRs...')
+
+        stdout_fileno = sys.stdout
+        logfile = Path.joinpath(Path(outDir),'batchexportlog.txt')
+        sys.stdout = open(logfile, 'w+')
+        sys.stderr = sys.stdout
+        
         for hpr in hprList:
             try:
                 exportHPR(str(hpr), outDir)
             except Exception as e:
                 print('Exception:')
                 print(e)
-        print('Done.')
+                
+        sys.stdout.close()
+        sys.stderr.close()
+        sys.stdout = stdout_fileno
+        sys.stderr = sys.stdout
+        print(f'Done. Check the {logfile}.')
         
         print('Aggregating HLL Metata...')
         aggregateHllMetadataFiles(outDir)
