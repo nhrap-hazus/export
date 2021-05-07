@@ -153,7 +153,8 @@ def exportHPR(hprFile, outputDir):
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'results.csv')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
@@ -172,7 +173,8 @@ def exportHPR(hprFile, outputDir):
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'building_damage_by_occupancy.csv')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Building Damage',
@@ -191,7 +193,8 @@ def exportHPR(hprFile, outputDir):
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'building_damage_by_type.csv')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Building Damage',
@@ -209,7 +212,8 @@ def exportHPR(hprFile, outputDir):
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'damaged_facilities.csv')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Damaged Facilities',
@@ -227,15 +231,13 @@ def exportHPR(hprFile, outputDir):
                 #EXPORT Hazus Package Region TO Shapefile...
                 try:
                     try:
-                        #print('Writing results to shapefile...')
                         print('Writing results to shapefile to zipfile...')
-                        #results.toShapefile(Path.joinpath(exportPath, 'results.shp'))
                         results.toShapefiletoZipFile(Path.joinpath(exportPath, 'results.shp'))
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
-                        #filePath = Path.joinpath(exportPath, 'results.shp')
                         filePath = Path.joinpath(exportPath, 'results.zip')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
@@ -249,15 +251,13 @@ def exportHPR(hprFile, outputDir):
                         print(e)
                         
                     try:
-                        #print('Writing Damaged facilities to shapefile.')
                         print('Writing Damaged facilities to shapefile to zipfile.')
-                        #essentialFacilities.toShapefile(Path.joinpath(exportPath, 'damaged_facilities.shp'))
                         essentialFacilities.toShapefiletoZipFile(Path.joinpath(exportPath, 'damaged_facilities.shp'))
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
-                        #filePath = Path.joinpath(exportPath, 'damaged_facilities.shp')
                         filePath = Path.joinpath(exportPath, 'damaged_facilities.zip')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Damaged Facilities',
@@ -272,16 +272,14 @@ def exportHPR(hprFile, outputDir):
 
                     if hazard['Hazard'] == 'flood':
                         try:
-                            #print('Writing Flood Hazard Boundary Polygon to shapefile...')
                             print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
                             hpr.getFloodBoundaryPolyName('R')
-                            #hpr.exportFloodHazardPolyToShapefile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
                             hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
-                            #filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.shp')
                             filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
-                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
                                                                               'subcategory':'Hazard',
@@ -307,7 +305,8 @@ def exportHPR(hprFile, outputDir):
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'results.geojson')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Results',
@@ -325,7 +324,8 @@ def exportHPR(hprFile, outputDir):
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'damaged_facilities.geojson')
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Damaged Facilities',
@@ -345,7 +345,8 @@ def exportHPR(hprFile, outputDir):
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
                             filePath = Path.joinpath(exportPath, 'impactarea.geojson')
-                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir)))
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
                                                                               'subcategory':'Hazard',
@@ -391,6 +392,41 @@ def exportHPR(hprFile, outputDir):
     except Exception as e:
         print(e)
 
+
+def aggregateHllMetadataFiles(directory):
+    """This tool crawls a directory and subdirectory for hll metadata files and
+    aggregates them into one at the root level.
+    
+    Keyword Arguments:
+        directory: str -- a batchExport root directory
+
+    Notes:
+        The path should be the root folder containing all the exported hpr folder.
+        'Event.csv','Analysis.csv','Download.csv'. Wath out for the relative path in
+        the hll metadata.
+    """
+    print(directory) #user defined outputdir
+    try:
+        df = pd.concat(map(pd.read_csv, list(Path(directory).glob('**/Event.csv'))))
+        df.to_csv(str(Path.joinpath(Path(directory), "Event.csv")), index=False)
+    except Exception as e:
+        print('Unexpected error aggregating HLL Metadata')
+        print(e)
+    try:
+        df = pd.concat(map(pd.read_csv, list(Path(directory).glob('**/Analysis.csv'))))
+        df.to_csv(str(Path.joinpath(Path(directory), "Analysis.csv")), index=False)
+    except Exception as e:
+        print('Unexpected error aggregating HLL Metadata')
+        print(e)
+    try:
+        df = pd.concat(map(pd.read_csv, list(Path(directory).glob('**/Download.csv'))))
+        #df['file'] = str(Path(directory).name) + df['file'].astype(str)
+        df.to_csv(str(Path.joinpath(Path(directory), "Download.csv")), index=False)
+    except Exception as e:
+        print('Unexpected error aggregating HLL Metadata')
+        print(e)
+    
+    
         
 if __name__ == '__main__':
     print('Running batch export...')
@@ -416,6 +452,13 @@ if __name__ == '__main__':
             except Exception as e:
                 print('Exception:')
                 print(e)
+        print('Done.')
+        
+        print('Aggregating HLL Metata...')
+        aggregateHllMetadataFiles(outDir)
+        print('Done.')
+        
         print()
     else:
         print('no HPR files found')
+        
