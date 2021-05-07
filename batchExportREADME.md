@@ -42,6 +42,21 @@ for each HPR file/StudyRegion.
 HLL uses field validation for data types and fields with choices (e.g. hazard, analysisType), but for fields like source, any string will do.
 Therefore if it says "FIX ME: USER INPUT NEEDED", it is possible to upload it like that.
 
+Event.csv
+
+* If the even is historic then it should have a value in the date field in YYYY-MM-DD.
+
+Analysis.csv
+
+* You can change the 'name' field to change what HLL displays.
+* You can change the 'analysisType' to historic, deterministic or probabilistic.
+* The 'date' refers to the date of the scenario analysis.
+* You can change 'modifiedInventory' to true or false.
+
+Download.csv
+
+* You can add a url to the 'link' field for a row and HLL button for that item will open the link instead of the file.
+
 **Renaming Study Regions and Scenarios:**
 
 To rename the Study Region you can open the 'Event.csv' and modify the value in the 'name' field.
@@ -114,11 +129,15 @@ third party libraries in hazus_env are still required for batchExport.
     
    Modify the directory path containing the HPR files you want to batch export:
 
-    hprDir = r'C:/workspace/hpr'               #The directory containing hpr files 
+        hprDir = r'C:/workspace/hpr'               #The directory containing hpr files 
     
    Modify the directory path for the batchExport output to where you want them to be saved to:
     
-    outDir = r'C:/workspace/batchexportOutput' #The directory for the output files 
+        outDir = r'C:/workspace/batchexportOutput' #The directory for the output files 
+
+   You can also modify the return periods directory name if you want to change the 'STAGE_' prefix by modifying it or deleting it:
+    
+        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), 'STAGE_' + str(returnPeriod).strip()) 
 
 2. Open Anaconda desktop and select the 'hazus_env' environment
 
