@@ -120,6 +120,16 @@ def exportHPR(hprFile, outputDir):
     for hazard in hpr.HazardsScenariosReturnPeriods:
         print(f"Hazard: {hazard['Hazard']}") #debug
 
+        #EXPORT Hazus Package Region TO GeoJSON...
+        exportPath = Path.joinpath(Path(outputPath))
+        try:
+            print('Writing hzBoundary to geojson...')
+            hzBoundary = hpr.getHzBoundary()
+            hzBoundary.toGeoJSON(Path.joinpath(exportPath, 'hzBoundary.geojson'))
+        except Exception as e:
+            print('hzBoundary not available to export to geojson')
+            print(e)
+
         #ADD ROW TO hllMetadataEvent TABLE...
         hazardUUID = uuid.uuid4()
         #need to add path to hazard boundary (is this unique for each returnperiod/download in FIMS?)
