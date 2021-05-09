@@ -381,10 +381,10 @@ def exportHPR(hprFile, outputDir):
                         print('Writing ImpactArea to geojson...')
                         econloss = hpr.getEconomicLoss()
                         if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
-                            econloss.toHLLGeoJSON(Path.joinpath(exportPath, 'impactarea.geojson'))
+                            econloss.toHLLGeoJSON(Path.joinpath(exportPath.parent, 'impactarea.geojson'))
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
-                            filePath = Path.joinpath(exportPath, 'impactarea.geojson')
+                            filePath = Path.joinpath(exportPath.parent, 'impactarea.geojson')
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
