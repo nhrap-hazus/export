@@ -123,43 +123,34 @@ def exportHPR(hprFile, outputDir):
         #EXPORT Hazus Package Region TO GeoJSON...
         exportPath = Path.joinpath(Path(outputPath))
         try:
-            print('Writing hzBoundary to geojson...')
+            print('Writing StudyRegionBoundary to geojson...')
             hzBoundary = hpr.getHzBoundary()
-            hzBoundary.toGeoJSON(Path.joinpath(exportPath, 'hzBoundary.geojson'))
+            hzBoundary.toGeoJSON(Path.joinpath(exportPath, 'StudyRegionBoundary.geojson'))
         except Exception as e:
-            print('hzBoundary not available to export to geojson')
+            print('StudyRegionBoundary not available to export to geojson')
             print(e)
 
         #ADD ROW TO hllMetadataEvent TABLE...
         hazardUUID = uuid.uuid4()
+        filePath = Path.joinpath(exportPath, 'StudyRegionBoundary.geojson')
+        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
         #need to add path to hazard boundary (is this unique for each returnperiod/download in FIMS?)
         hllMetadataEvent = hllMetadataEvent.append({'id':hazardUUID,
-                                                    'name':hpr.dbName}, ignore_index=True)
+                                                    'name':hpr.dbName,
+                                                    'geom':filePathRel}, ignore_index=True)
 
         #SCENARIOS/ANALYSIS
         for scenario in hazard['Scenarios']:
             print(f"Scenario: {scenario['ScenarioName']}") #debug
 
             if hazard['Hazard'] == 'flood':
-                #logfile = 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'
-                #breakpoint()
+                """'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
                 logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
                 analysisDate = getflAnalysisLogDate(logfile)
+                
+            scenarioGEOM = ''
 
-            #ADD ROW TO hllMetadataScenario TABLE...
-            scenarioUUID = uuid.uuid4()
-            #need to get analysis geometric boundary in geojson 4326, can be path to file?
-            scenarioMETA = str({"Hazus Version":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
-            hllMetadataScenario = hllMetadataScenario.append({'id':scenarioUUID,
-                                                              'name':scenario['ScenarioName'],
-                                                              'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
-                                                              'analysisType':'deterministic', #historic, deterministic, probabilistic
-                                                              #'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
-                                                              'date':analysisDate, #USGS FIM HPR
-                                                              'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
-                                                              'modifiedInventory':'false', #true/false
-                                                              'event':hazardUUID,
-                                                              'meta':scenarioMETA}, ignore_index=True)
             #RETURNPERIODS/DOWNLOAD
             for returnPeriod in scenario['ReturnPeriods']:
                 print(f"returnPeriod: {returnPeriod}") #debug
@@ -218,7 +209,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Building Damage',
-                                                                          'name':'Building damage by occupancy.csv',
+                                                                          'name':'Building Damage by Occupancy.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -238,7 +229,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Building Damage',
-                                                                          'name':'Building damage by type.csv',
+                                                                          'name':'Building Damage by Type.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -257,7 +248,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Damaged Facilities',
-                                                                          'name':'Damaged facilities.csv',
+                                                                          'name':'Damaged Facilities.csv',
                                                                           'icon':'spreadsheet',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -301,7 +292,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Damaged Facilities',
-                                                                          'name':'Damaged facilities.shp',
+                                                                          'name':'Damaged Facilities.shp',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -313,6 +304,8 @@ def exportHPR(hprFile, outputDir):
                     if hazard['Hazard'] == 'flood':
                         try:
                             print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
+                            #The following two commented out lines encounter ODBC issues on some machines,
+                            #possibly due to 32 and 64bit access driver conflicts
 ##                            hpr.getFloodBoundaryPolyName('R')
 ##                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
                             hazardGDF = hpr.getHazardGeoDataFrame()
@@ -371,7 +364,7 @@ def exportHPR(hprFile, outputDir):
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                           'category':returnPeriod,
                                                                           'subcategory':'Damaged Facilities',
-                                                                          'name':'Damaged facilities.geojson',
+                                                                          'name':'Damaged Facilities.geojson',
                                                                           'icon':'spatial',
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
@@ -383,31 +376,66 @@ def exportHPR(hprFile, outputDir):
                         print('Writing ImpactArea to geojson...')
                         econloss = hpr.getEconomicLoss()
                         if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
-                            econloss.toHLLGeoJSON(Path.joinpath(exportPath.parent, 'impactarea.geojson'))
+                            econloss.toHLLGeoJSON(Path.joinpath(exportPath, 'impactarea.geojson'))
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
-                            filePath = Path.joinpath(exportPath.parent, 'impactarea.geojson')
+                            filePath = Path.joinpath(exportPath, 'impactarea.geojson')
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':returnPeriod,
                                                                               'subcategory':'Hazard',
-                                                                              'name':'Impact area.geojson',
+                                                                              'name':'Impact Area.geojson',
                                                                               'icon':'spatial',
                                                                               'file':filePathRel,
                                                                               'analysis':scenarioUUID}, ignore_index=True)
                         else:
                             print('no econ loss for HLL geojson')
-                    except Exception as e:
-                        print('Convex Hull Simplified Economic loss not available to export to geojson.')
-                        print(e)
                             
+                    except Exception as e:
+                        print('ImpactArea not available to export to geojson.')
+                        print(e)
+
+                    try:
+                        """This section is to write the same impact area geojson but at the scenario level. """
+                        print('Writing ImpactArea Scenario to geojson...')
+                        econloss = hpr.getEconomicLoss()
+                        if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
+                            econloss.toHLLGeoJSON(Path.joinpath(exportPath.parent, 'impactarea.geojson'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            filePath = Path.joinpath(exportPath.parent, 'impactarea.geojson')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            scenarioGEOM = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                        else:
+                            print('no econ loss for HLL Scenario geojson')
+                    except Exception as e:
+                        print('ImpactArea Scenario not available to export to geojson.')
+                        print(e)
+                        
                 except Exception as e:
                     print('Unexpected error exporting to GeoJSON:')
                     print(e)
-                    
+
+
+
+            #ADD ROW TO hllMetadataScenario TABLE...
+            scenarioUUID = uuid.uuid4()
+            scenarioMETA = str({"Hazus Version":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
+            hllMetadataScenario = hllMetadataScenario.append({'id':scenarioUUID,
+                                                              'name':scenario['ScenarioName'],
+                                                              'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
+                                                              'analysisType':'deterministic', #historic, deterministic, probabilistic
+                                                              #'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
+                                                              'date':analysisDate, #USGS FIM HPR
+                                                              'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
+                                                              'modifiedInventory':'false', #true/false
+                                                              'meta':scenarioMETA,
+                                                              'event':hazardUUID,
+                                                              'geom':scenarioGEOM}, ignore_index=True)
             print()
             print()
+
+            
 
     #EXPORT HLL METADATA (NOTE: openpyxl (*et_xmlfile, &jdcal)) not installed, can't export to excel)...
     ##hllMetadataPath = str(Path.joinpath(Path(outputPath), "exportHLLMetadata.xlsx"))
