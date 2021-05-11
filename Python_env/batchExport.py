@@ -46,7 +46,7 @@ def getflAnalysisLogDate(logfile):
         print(e)
         return 'YYYY-MM-DD'
 
-def exportHPR(hprFile, outputDir):
+def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
     """This tool will use hazpy.legacy.hazuspackagregion to batch export
         hpr files in a directory to a user specified output directory.
         
@@ -148,7 +148,9 @@ def exportHPR(hprFile, outputDir):
                 """'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
                 logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
                 analysisDate = getflAnalysisLogDate(logfile)
-                
+
+            scenarioUUID = uuid.uuid4()
+            scenarioMETA = str({"Hazus Version":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
             scenarioGEOM = ''
 
             #RETURNPERIODS/DOWNLOAD
@@ -419,8 +421,6 @@ def exportHPR(hprFile, outputDir):
 
 
             #ADD ROW TO hllMetadataScenario TABLE...
-            scenarioUUID = uuid.uuid4()
-            scenarioMETA = str({"Hazus Version":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
             hllMetadataScenario = hllMetadataScenario.append({'id':scenarioUUID,
                                                               'name':scenario['ScenarioName'],
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
@@ -451,16 +451,18 @@ def exportHPR(hprFile, outputDir):
     hllMetadataDownload.to_csv(hllMetadataDownloadPath, index=False)
 
     #DROP SQL SERVER HPR DATABASE...
-    try:
-        hpr.dropDB()
-    except Exception as e:
-        print(e)
+    if deleteDB == 1:
+        try:
+            hpr.dropDB()
+        except Exception as e:
+            print(e)
 
     #DELETE UNZIPPED HPR FOLDER...
-    try:
-        hpr.deleteTempDir()
-    except Exception as e:
-        print(e)
+    if deleteTempDir == 1:
+        try:
+            hpr.deleteTempDir()
+        except Exception as e:
+            print(e)
 
 
 def aggregateHllMetadataFiles(directory):
@@ -526,7 +528,7 @@ if __name__ == '__main__':
         
         for hpr in hprList:
             try:
-                exportHPR(str(hpr), outDir)
+                exportHPR(str(hpr), outDir, deleteTempDir=0)
             except Exception as e:
                 print('Exception:')
                 print(e)
