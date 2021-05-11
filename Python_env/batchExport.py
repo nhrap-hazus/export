@@ -313,8 +313,10 @@ def exportHPR(hprFile, outputDir):
                     if hazard['Hazard'] == 'flood':
                         try:
                             print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
-                            hpr.getFloodBoundaryPolyName('R')
-                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
+##                            hpr.getFloodBoundaryPolyName('R')
+##                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
+                            hazardGDF = hpr.getHazardGeoDataFrame()
+                            hazardGDF.toShapefiletoZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
                             filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
