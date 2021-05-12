@@ -265,7 +265,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                 try:
                     try:
                         print('Writing results to shapefile to zipfile...')
-                        results.toShapefiletoZipFile(Path.joinpath(exportPath, 'results.shp'))
+                        results.toShapefiletoZipFile(Path.joinpath(exportPath, 'results.shp'), 'epsg:4326', 'epsg:4326')
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'results.zip')
@@ -285,7 +285,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         
                     try:
                         print('Writing Damaged facilities to shapefile to zipfile.')
-                        essentialFacilities.toShapefiletoZipFile(Path.joinpath(exportPath, 'damaged_facilities.shp'))
+                        essentialFacilities.toShapefiletoZipFile(Path.joinpath(exportPath, 'damaged_facilities.shp'), 'epsg:4326', 'epsg:4326')
                         #ADD ROW TO hllMetadataDownload TABLE...
                         downloadUUID = uuid.uuid4()
                         filePath = Path.joinpath(exportPath, 'damaged_facilities.zip')
@@ -303,30 +303,29 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         print('Damaged facilities not available to export to shapefile to zipfile...')
                         print(e)
 
-                    if hazard['Hazard'] == 'flood':
-                        try:
-                            print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
-                            #The following two commented out lines encounter ODBC issues on some machines,
-                            #possibly due to 32 and 64bit access driver conflicts
+                    try:
+                        print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
+                        #The following two commented out lines encounter ODBC issues on some machines,
+                        #possibly due to 32 and 64bit access driver conflicts
 ##                            hpr.getFloodBoundaryPolyName('R')
 ##                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
-                            hazardGDF = hpr.getHazardGeoDataFrame()
-                            hazardGDF.toShapefiletoZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
-                            #ADD ROW TO hllMetadataDownload TABLE...
-                            downloadUUID = uuid.uuid4()
-                            filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
-                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                              'category':returnPeriod,
-                                                                              'subcategory':'Hazard',
-                                                                              'name':'Hazard Boundary.shp',
-                                                                              'icon':'spatial',
-                                                                              'file':filePathRel,
-                                                                              'analysis':scenarioUUID}, ignore_index=True)
-                        except Exception as e:
-                            print('Writing Hazard not available to export to shapefile...')
-                            print(e)
+                        hazardGDF = hpr.getHazardGeoDataFrame()
+                        hazardGDF.toShapefiletoZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'), 'epsg:4326', 'epsg:4326')
+                        #ADD ROW TO hllMetadataDownload TABLE...
+                        downloadUUID = uuid.uuid4()
+                        filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
+                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                          'category':returnPeriod,
+                                                                          'subcategory':'Hazard',
+                                                                          'name':'Hazard Boundary.shp',
+                                                                          'icon':'spatial',
+                                                                          'file':filePathRel,
+                                                                          'analysis':scenarioUUID}, ignore_index=True)
+                    except Exception as e:
+                        print('Writing Hazard not available to export to shapefile...')
+                        print(e)
                         
                 except Exception as e:
                     print(u"Unexpected error exporting Shapefile: ")
@@ -399,7 +398,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         print(e)
 
                     try:
-                        """This section is to write the same impact area geojson but at the scenario level. """
+                        """This section is to write the same impact area geojson but at the scenario level."""
                         print('Writing ImpactArea Scenario to geojson...')
                         econloss = hpr.getEconomicLoss()
                         if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
