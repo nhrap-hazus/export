@@ -527,7 +527,7 @@ if __name__ == '__main__':
         
         for hpr in hprList:
             try:
-                exportHPR(str(hpr), outDir, deleteTempDir=0)
+                exportHPR(str(hpr), outDir)
             except Exception as e:
                 print('Exception:')
                 print(e)
