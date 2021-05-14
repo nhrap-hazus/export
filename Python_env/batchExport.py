@@ -119,6 +119,9 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
     #ITERATE OVER THE HAZARD, SCENARIO, RETURNPERIOD AVAIALABLE COMBINATIONS...
     for hazard in hpr.HazardsScenariosReturnPeriods:
         print(f"Hazard: {hazard['Hazard']}") #debug
+        
+        #SET HPR HAZARD...
+        hpr.hazard = hazard['Hazard']
 
         #EXPORT Hazus Package Region TO GeoJSON...
         exportPath = Path.joinpath(Path(outputPath))
@@ -130,6 +133,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             print('StudyRegionBoundary not available to export to geojson')
             print(e)
 
+        #Event metadata...
         #ADD ROW TO hllMetadataEvent TABLE...
         hazardUUID = uuid.uuid4()
         filePath = Path.joinpath(exportPath, 'StudyRegionBoundary.geojson')
@@ -144,24 +148,38 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
         for scenario in hazard['Scenarios']:
             print(f"Scenario: {scenario['ScenarioName']}") #debug
 
+            #SET HPR SCENARIO...
+            hpr.scenario = scenario['ScenarioName']
+
+            #Analysis Metadata part one of two...
+            scenarioUUID = uuid.uuid4()
+            scenarioMETA = {"Hazus Version":f"{hpr.HazusVersion}"}
+            scenarioGEOM = '' #initialize variable to be set later
+            
             if hazard['Hazard'] == 'flood':
-                """'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
+                analysisType = 'Deterministic' #USGSFIM
+                """i.e. 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
                 logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
                 analysisDate = getflAnalysisLogDate(logfile)
-
-            scenarioUUID = uuid.uuid4()
-            scenarioMETA = str({"Hazus Version":f"{hpr.HazusVersion}"}).replace("'",'"') #needs to be double quotes
-            scenarioGEOM = ''
+            elif hazard['Hazard'] == 'earthquake':
+                scenarioMETA["Magnitude"] = hpr.getEarthquakeMagnitude()
+                analysisType = hpr.getAnalysisType()
+                if analysisType in ['Shakemap', 'Scenario']:
+                    scenarioMETA["ShakemapUrl"] = hpr.getEarthquakeShakemapUrl()
+                analysisDate = hpr.getHPRFileDateTime(hpr.hprFilePath, 'AnalysisLog.txt')
+            else:
+                analysisDate = 'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
 
             #RETURNPERIODS/DOWNLOAD
             for returnPeriod in scenario['ReturnPeriods']:
                 print(f"returnPeriod: {returnPeriod}") #debug
 
-                #SET HPR HAZARD, SCENARIO, RETURNPERIOD...
-                hpr.hazard = hazard['Hazard']
-                hpr.scenario = scenario['ScenarioName']
+                #SET HPR RETURNPERIOD...
                 hpr.returnPeriod = returnPeriod
                 print(f"hazard = {hpr.hazard}, scenario = {hpr.scenario}, returnPeriod = {hpr.returnPeriod}") #debug
+
+                #Downloads Metadata
+                #For shakemap https://earthquake.usgs.gov/scenarios/eventpage/{shakemapID}/executive
 
                 #GET BULK OF RESULTS...
                 try:
@@ -173,9 +191,26 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                 except Exception as e:
                     print(e)
 
-                #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS LIKE "HPR>Hazard>Scenario>STAGE_ReturnPeriod"...
-                #returnperiod divider is set to STAGE for FIMs/PTS but can be changed back to RP for other.
-                exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), 'STAGE_' + str(returnPeriod).strip())
+                #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS...
+                if hazard['Hazard'] == 'earthquake' and analysisType in ['Shakemap', 'Scenario']:
+                    #Deterministic;Shakemap;Scenario
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip()) 
+                elif hazard['Hazard'] == 'earthquake' and analysisType in ['Probabilistic']:
+                    #Probabilistic
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
+                elif hazard['Hazard'] == 'flood':
+                    #USGS FIM Deterministic
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), 'STAGE_' + str(returnPeriod).strip())
+                elif hazard['Hazard'] == 'hurricane' and analysisType in ['Deterministic']:
+                    #Deterministic
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip()) 
+                elif hazard['Hazard'] == 'hurricane' and analysisType in ['Probabilistic']:
+                    #Probabilistic
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
+                elif hazard['Hazard'] == 'tsunami':
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
+                else:
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
                 Path(exportPath).mkdir(parents=True, exist_ok=True) #this may make the earlier HPR dir creation redundant
 
                 #EXPORT Hazus Package Region TO CSV...
@@ -257,6 +292,29 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                     except Exception as e:
                         print('Damaged facilities not available to export to csv.')
                         print(e)
+                        
+                    if hpr.hazard == 'earthquake':
+                        try:
+                            print('Writing eqShakeMapScenario to CSV')
+                            EQShakeMapScenario = hpr.getEQShakeMapScenario()
+                            EQShakeMapScenario.toCSV(Path.joinpath(exportPath, 'ShakeMap_Scenario.csv'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'ShakeMap_Scenario.csv')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':returnPeriod,
+                                                                              'subcategory':'ShakeMap Scenario',
+                                                                              'name':'ShakeMap Scenario.csv',
+                                                                              'icon':'spreadsheet',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('eqShakeMapScenario not available to export to csv.')
+                            print(e)
+
+                    
                 except Exception as e:
                     print('Unexpected error exporting CSVs')
                     print(e)
@@ -304,7 +362,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         print(e)
 
                     try:
-                        print('Writing Flood Hazard Boundary Polygon to shapefile to zipfile...')
+                        print('Writing Hazard Boundary Polygon to shapefile to zipfile...')
                         #The following two commented out lines encounter ODBC issues on some machines,
                         #possibly due to 32 and 64bit access driver conflicts
 ##                            hpr.getFloodBoundaryPolyName('R')
@@ -324,7 +382,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
                     except Exception as e:
-                        print('Writing Hazard not available to export to shapefile...')
+                        print('Writing Hazard Boundary not available to export to shapefile...')
                         print(e)
                         
                 except Exception as e:
@@ -417,23 +475,20 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                     print('Unexpected error exporting to GeoJSON:')
                     print(e)
 
-
-
+            #Analysis Metadata part two of two...
             #ADD ROW TO hllMetadataScenario TABLE...
             hllMetadataScenario = hllMetadataScenario.append({'id':scenarioUUID,
                                                               'name':scenario['ScenarioName'],
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
-                                                              'analysisType':'deterministic', #historic, deterministic, probabilistic
-                                                              #'date':'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
-                                                              'date':analysisDate, #USGS FIM HPR
+                                                              'analysisType':analysisType, #historic, deterministic, probabilistic
+                                                              'date':analysisDate, #YYYY-MM-DD
                                                               'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
                                                               'modifiedInventory':'false', #true/false
-                                                              'meta':scenarioMETA,
+                                                              'meta':str(scenarioMETA).replace("'",'"'), #needs to be double quotes; one level Python dict/json
                                                               'event':hazardUUID,
-                                                              'geom':scenarioGEOM}, ignore_index=True)
+                                                              'geom':scenarioGEOM}, #filepath to geojson
+                                                             ignore_index=True)
             print()
-            print()
-
             
 
     #EXPORT HLL METADATA (NOTE: openpyxl (*et_xmlfile, &jdcal)) not installed, can't export to excel)...
@@ -451,17 +506,11 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
 
     #DROP SQL SERVER HPR DATABASE...
     if deleteDB == 1:
-        try:
-            hpr.dropDB()
-        except Exception as e:
-            print(e)
+        hpr.dropDB()
 
     #DELETE UNZIPPED HPR FOLDER...
     if deleteTempDir == 1:
-        try:
-            hpr.deleteTempDir()
-        except Exception as e:
-            print(e)
+        hpr.deleteTempDir()
 
 
 def aggregateHllMetadataFiles(directory):
@@ -527,7 +576,8 @@ if __name__ == '__main__':
         
         for hpr in hprList:
             try:
-                exportHPR(str(hpr), outDir)
+                exportHPR(str(hpr), outDir, deleteDB=0, deleteTempDir=0)
+                print()
             except Exception as e:
                 print('Exception:')
                 print(e)
