@@ -157,9 +157,24 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             scenarioGEOM = '' #initialize variable to be changed later
             scenarioSource = 'FIX ME: USER INPUT NEEDED (100 chars max)' #default value, likely to change
             downloadLink = '' #default value
+            scenarioGeographicCount = '' #initialize variable to be changed later
+            scenarioGeographicUnit = '' #initialize variable to be changed later
+            scenarioLosses = hpr.getTotalEconomicLoss()
+            scenarioLossesUnit = 'thousand'
+            if scenarioLosses >= 1000:
+                scenarioLosses = str(int(scenarioLosses/1000))
+                scenarioLossesUnit = 'million'
+            elif scenarioLosses >= 1000000:
+                scenarioLosses = str(int(scenarioLosses/1000000))
+                scenarioLossesUnit = 'billion'
+            elif scenarioLosses >= 1000000000:
+                scenarioLosses = str(int(scenarioLosses/1000000000))
+                scenarioLossesUnit = 'trillion'
+            else:
+                pass
             
             if hazard['Hazard'] == 'flood':
-                analysisType = 'Deterministic' #USGSFIM
+                analysisType = 'Deterministic' #USGS FIM
                 """i.e. 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
                 logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
                 analysisDate = getflAnalysisLogDate(logfile)
@@ -173,7 +188,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                     downloadLink = hpr.getEarthquakeShakemapUrl()
                 analysisDate = hpr.getHPRFileDateTime(hpr.hprFilePath, 'AnalysisLog.txt')
             else:
-                analysisDate = 'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
+                analysisDate = 'FIX ME (YYYY-MM-DD)',
 
             #RETURNPERIODS/DOWNLOAD
             for returnPeriod in scenario['ReturnPeriods']:
@@ -195,6 +210,11 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         print('No results found. Please check your Hazus Package Region and try again.')
                 except Exception as e:
                     print(e)
+
+                #HLL Metadata...
+                geographicCountUnit = hpr.getGeographicCountUnitofResults(results)
+                scenarioGeographicCount = geographicCountUnit[0]
+                scenarioGeographicUnit = geographicCountUnit[1]
 
                 #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS...
                 if hazard['Hazard'] == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
@@ -298,7 +318,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         print('Damaged facilities not available to export to csv.')
                         print(e)
                         
-                    if hpr.hazard == 'earthquake':
+                    if hpr.hazard == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
                         try:
                             print('Writing eqShakeMapScenario to CSV')
                             EQShakeMapScenario = hpr.getEQShakeMapScenario()
@@ -309,8 +329,8 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                              'category':returnPeriod,
-                                                                              'subcategory':'ShakeMap Scenario',
+                                                                              'category':'Results',
+                                                                              'subcategory':'Metadata',
                                                                               'name':'ShakeMap Scenario.csv',
                                                                               'icon':'spreadsheet',
                                                                               'file':filePathRel,
@@ -490,6 +510,10 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                                                               'date':analysisDate, #YYYY-MM-DD
                                                               'source':scenarioSource, #Max100 chars
                                                               'modifiedInventory':'false', #true/false
+                                                              'geographicCount':scenarioGeographicCount,
+                                                              'geographicUnit':scenarioGeographicUnit,
+                                                              'losses':scenarioLosses,
+                                                              'lossesUnit':scenarioLossesUnit,
                                                               'meta':str(scenarioMETA).replace("'",'"'), #needs to be double quotes; one level Python dict/json
                                                               'event':hazardUUID,
                                                               'geom':scenarioGEOM}, #filepath to geojson
