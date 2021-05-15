@@ -154,7 +154,9 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             #Analysis Metadata part one of two...
             scenarioUUID = uuid.uuid4()
             scenarioMETA = {"Hazus Version":f"{hpr.HazusVersion}"}
-            scenarioGEOM = '' #initialize variable to be set later
+            scenarioGEOM = '' #initialize variable to be changed later
+            scenarioSource = 'FIX ME: USER INPUT NEEDED (100 chars max)' #default value, likely to change
+            downloadLink = '' #default value
             
             if hazard['Hazard'] == 'flood':
                 analysisType = 'Deterministic' #USGSFIM
@@ -164,8 +166,11 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             elif hazard['Hazard'] == 'earthquake':
                 scenarioMETA["Magnitude"] = hpr.getEarthquakeMagnitude()
                 analysisType = hpr.getAnalysisType()
-                if analysisType in ['Shakemap', 'Scenario']:
-                    scenarioMETA["ShakemapUrl"] = hpr.getEarthquakeShakemapUrl()
+                if analysisType in ['Probabilistic']:
+                    scenarioSource = 'USGS National Hazard Maps'
+                if analysisType in ['Historic', 'Deterministic']:
+                    scenarioSource = 'USGS ShakeMap'
+                    downloadLink = hpr.getEarthquakeShakemapUrl()
                 analysisDate = hpr.getHPRFileDateTime(hpr.hprFilePath, 'AnalysisLog.txt')
             else:
                 analysisDate = 'FIX ME (YYYY-MM-DD)', #YYYY-MM-DD
@@ -192,7 +197,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                     print(e)
 
                 #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS...
-                if hazard['Hazard'] == 'earthquake' and analysisType in ['Shakemap', 'Scenario']:
+                if hazard['Hazard'] == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
                     #Deterministic;Shakemap;Scenario
                     exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip()) 
                 elif hazard['Hazard'] == 'earthquake' and analysisType in ['Probabilistic']:
@@ -379,14 +384,15 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                                                                           'subcategory':'Hazard',
                                                                           'name':'Hazard Boundary.shp',
                                                                           'icon':'spatial',
+                                                                          'link':downloadLink,
                                                                           'file':filePathRel,
                                                                           'analysis':scenarioUUID}, ignore_index=True)
                     except Exception as e:
-                        print('Writing Hazard Boundary not available to export to shapefile...')
+                        print('Hazard Boundary not available to export to shapefile to zipfile...')
                         print(e)
                         
                 except Exception as e:
-                    print(u"Unexpected error exporting Shapefile: ")
+                    print(u"Unexpected error exporting Shapefiles: ")
                     print(e)
 
 
@@ -482,7 +488,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                                                               'hazard':hazard['Hazard'], #flood, hurricane, earthquake, tsunami, tornado
                                                               'analysisType':analysisType, #historic, deterministic, probabilistic
                                                               'date':analysisDate, #YYYY-MM-DD
-                                                              'source':'FIX ME: USER INPUT NEEDED (100 chars max)', #Max100 chars
+                                                              'source':scenarioSource, #Max100 chars
                                                               'modifiedInventory':'false', #true/false
                                                               'meta':str(scenarioMETA).replace("'",'"'), #needs to be double quotes; one level Python dict/json
                                                               'event':hazardUUID,
@@ -576,7 +582,7 @@ if __name__ == '__main__':
         
         for hpr in hprList:
             try:
-                exportHPR(str(hpr), outDir, deleteDB=0, deleteTempDir=0)
+                exportHPR(str(hpr), outDir, deleteDB=1, deleteTempDir=1)
                 print()
             except Exception as e:
                 print('Exception:')
