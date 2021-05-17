@@ -159,19 +159,6 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             downloadLink = '' #default value
             scenarioGeographicCount = '' #initialize variable to be changed later
             scenarioGeographicUnit = '' #initialize variable to be changed later
-            scenarioLosses = hpr.getTotalEconomicLoss()
-            scenarioLossesUnit = 'thousand'
-            if scenarioLosses >= 1000:
-                scenarioLosses = str(int(scenarioLosses/1000))
-                scenarioLossesUnit = 'million'
-            elif scenarioLosses >= 1000000:
-                scenarioLosses = str(int(scenarioLosses/1000000))
-                scenarioLossesUnit = 'billion'
-            elif scenarioLosses >= 1000000000:
-                scenarioLosses = str(int(scenarioLosses/1000000000))
-                scenarioLossesUnit = 'trillion'
-            else:
-                pass
             
             if hazard['Hazard'] == 'flood':
                 analysisType = 'Deterministic' #USGS FIM
@@ -198,8 +185,6 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                 hpr.returnPeriod = returnPeriod
                 print(f"hazard = {hpr.hazard}, scenario = {hpr.scenario}, returnPeriod = {hpr.returnPeriod}") #debug
 
-                #Downloads Metadata
-                #For shakemap https://earthquake.usgs.gov/scenarios/eventpage/{shakemapID}/executive
 
                 #GET BULK OF RESULTS...
                 try:
@@ -211,15 +196,36 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                 except Exception as e:
                     print(e)
 
-                #HLL Metadata...
+                #HLL Analysis/Scenario Metadata (some sceneario/analysis level info requires returnperiod/download input)...
                 geographicCountUnit = hpr.getGeographicCountUnitofResults(results)
                 scenarioGeographicCount = geographicCountUnit[0]
                 scenarioGeographicUnit = geographicCountUnit[1]
+                scenarioLosses = int(hpr.getTotalEconomicLoss())
+                scenarioLossesUnit = 'USD'
+                if scenarioLosses >= 1000 and scenarioLosses < 1000000:
+                    scenarioLosses = str(round(scenarioLosses/1000,1))
+                    scenarioLossesUnit = 'thousand'
+                elif scenarioLosses >= 1000000 and scenarioLosses < 1000000000:
+                    scenarioLosses = str(round(scenarioLosses/1000000,1))
+                    scenarioLossesUnit = 'million'
+                elif scenarioLosses >= 1000000000 and scenarioLosses < 1000000000000:
+                    scenarioLosses = str(round(scenarioLosses/1000000000,1))
+                    scenarioLossesUnit = 'billion'
+                elif scenarioLosses >= 1000000000000:
+                    scenarioLosses = str(round(scenarioLosses/1000000000000,1))
+                    scenarioLossesUnit = 'trillion'
+                else:
+                    pass
 
-                #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS...
+                #HLL ReturnPeriod/Downloads Metadata
+                #For shakemap https://earthquake.usgs.gov/scenarios/eventpage/{shakemapID}/executive
+                downloadCategory = returnPeriod
+
+                #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS (and set some HLL metadata values)...
                 if hazard['Hazard'] == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
                     #Deterministic;Shakemap;Scenario
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip()) 
+                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
+                    downloadCategory = 'Results'
                 elif hazard['Hazard'] == 'earthquake' and analysisType in ['Probabilistic']:
                     #Probabilistic
                     exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
@@ -249,7 +255,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Results',
                                                                           'name':'Results.csv',
                                                                           'icon':'spreadsheet',
@@ -269,7 +275,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Building Damage',
                                                                           'name':'Building Damage by Occupancy.csv',
                                                                           'icon':'spreadsheet',
@@ -289,7 +295,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Building Damage',
                                                                           'name':'Building Damage by Type.csv',
                                                                           'icon':'spreadsheet',
@@ -308,7 +314,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Damaged Facilities',
                                                                           'name':'Damaged Facilities.csv',
                                                                           'icon':'spreadsheet',
@@ -329,7 +335,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                              'category':'Results',
+                                                                              'category':downloadCategory,
                                                                               'subcategory':'Metadata',
                                                                               'name':'ShakeMap Scenario.csv',
                                                                               'icon':'spreadsheet',
@@ -355,7 +361,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Results',
                                                                           'name':'Results.shp',
                                                                           'icon':'spatial',
@@ -375,7 +381,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Damaged Facilities',
                                                                           'name':'Damaged Facilities.shp',
                                                                           'icon':'spatial',
@@ -400,7 +406,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Hazard',
                                                                           'name':'Hazard Boundary.shp',
                                                                           'icon':'spatial',
@@ -428,7 +434,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Results',
                                                                           'name':'Results.geojson',
                                                                           'icon':'spatial',
@@ -447,7 +453,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                         #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                         filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                         hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':returnPeriod,
+                                                                          'category':downloadCategory,
                                                                           'subcategory':'Damaged Facilities',
                                                                           'name':'Damaged Facilities.geojson',
                                                                           'icon':'spatial',
@@ -468,7 +474,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                              'category':returnPeriod,
+                                                                              'category':downloadCategory,
                                                                               'subcategory':'Hazard',
                                                                               'name':'Impact Area.geojson',
                                                                               'icon':'spatial',
