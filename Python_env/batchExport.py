@@ -2,7 +2,7 @@
 
 Requirements: Python 3, Hazpy 0.0.1, Anaconda with hazus_env installed
 
-Works for USGS FIM Flood HPR files.
+Recursively finds .hpr files in input folder (and subdirectories).
 
 How to use: Define your input folder containing hpr files and define
             an output folder to export the results and files to. This
@@ -13,7 +13,7 @@ How to use: Define your input folder containing hpr files and define
             Start by going to the bottom of this script
             to change the user inputs, then open a terminal in anaconda
             hazus_env, navigate to this scripts directory, activate
-            python in theh terminal and run this script.
+            python in the terminal and run this script.
 
 """
 
@@ -34,17 +34,29 @@ def getflAnalysisLogDate(logfile):
             analysisLogDate: string -- The date the flAnalysisLog was created in YYYY-MM-DD
         Notes:
             1st Line of flAnalysisLog.txt:
-            2021/04/20 11:49:28.227 File: "C:\HazusData\Regions\nora\nora_08\\flAnalysisLog.txt" created on-the-fly from MSSQL
+                2021/04/20 11:49:28.227 File: "C:\HazusData\Regions\nora\nora_08\\flAnalysisLog.txt" created on-the-fly from MSSQL
+            1st line of TsunamiLog.txt:
+                5/5/2018 2:07:20 PM Start Hazard Process
             
     """
     try:
         file = open(logfile, 'r')
-        analysisLogDate = file.readline()[0:10].replace('/','-')
-        return analysisLogDate
+        date = file.readline().split(' ')[0].split('/')
+        if len(date) == 3:
+            if len(date[0]) > 2:
+                year = date[0]
+                month = date[1]
+                day = date[2]
+            elif len(date[2]) > 2:
+                year = date[2]
+                month = date[0]
+                day = date[1]
+            analysisLogDate = f"{year}-{month}-{day}"
+            return analysisLogDate
+        return 'FIX ME: YYYY-MM-DD'
     except Exception as e:
         print('Unexpected error getflAnalysisLogDate')
         print(e)
-        return 'YYYY-MM-DD'
 
 def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
     """This tool will use hazpy.legacy.hazuspackagregion to batch export
@@ -155,17 +167,14 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             scenarioUUID = uuid.uuid4()
             scenarioMETA = {"Hazus Version":f"{hpr.HazusVersion}"}
             scenarioGEOM = '' #initialize variable to be changed later
+            analysisType = 'FIX ME: Deterministic, Historic, Probabilistic' #initialize variable to be changed later
+            analysisDate = 'FIX ME: (YYYY-MM-DD)' #initialize variable to be changed later
             scenarioSource = 'FIX ME: USER INPUT NEEDED (100 chars max)' #default value, likely to change
             downloadLink = '' #default value
             scenarioGeographicCount = '' #initialize variable to be changed later
             scenarioGeographicUnit = '' #initialize variable to be changed later
             
-            if hazard['Hazard'] == 'flood':
-                analysisType = 'Deterministic' #USGS FIM
-                """i.e. 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
-                logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
-                analysisDate = getflAnalysisLogDate(logfile)
-            elif hazard['Hazard'] == 'earthquake':
+            if hazard['Hazard'] == 'earthquake':
                 scenarioMETA["Magnitude"] = hpr.getEarthquakeMagnitude()
                 analysisType = hpr.getAnalysisType()
                 if analysisType in ['Probabilistic']:
@@ -174,8 +183,16 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                     scenarioSource = 'USGS ShakeMap'
                     downloadLink = hpr.getEarthquakeShakemapUrl()
                 analysisDate = hpr.getHPRFileDateTime(hpr.hprFilePath, 'AnalysisLog.txt')
-            else:
-                analysisDate = 'FIX ME (YYYY-MM-DD)',
+            if hazard['Hazard'] == 'flood':
+                analysisType = 'Deterministic' #USGS FIM
+                """i.e. 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
+                logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
+                analysisDate = getflAnalysisLogDate(logfile)
+            if hazard['Hazard'] == 'hurricane':
+                pass
+            if hazard['Hazard'] == 'tsunami':
+                logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'TsunamiLog.txt')
+                analysisDate = getflAnalysisLogDate(logfile)
 
             #RETURNPERIODS/DOWNLOAD
             for returnPeriod in scenario['ReturnPeriods']:
@@ -598,7 +615,7 @@ if __name__ == '__main__':
     
     print(f'HPR List:')
     fileExt = r'*.hpr'
-    hprList = list(Path(hprDir).glob(fileExt))
+    hprList = list(Path(hprDir).rglob(fileExt)) #recursively find .hpr files
     for hpr in hprList:
         print(hpr)
 
