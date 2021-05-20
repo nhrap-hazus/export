@@ -25,8 +25,8 @@ import uuid
 import sys
 
 
-def getflAnalysisLogDate(logfile):
-    """Find the date of analysis from the flAnalysisLog.txt
+def getAnalysisLogDate(logfile):
+    """Find the date of analysis from a AnalysisLog.txt
 
         Key Argument:
             logfile: string -- the path to the logfie
@@ -73,7 +73,9 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             
     """
     hpr = HazusPackageRegion(hprFilePath=hprFile, outputDir=outputDir)
-
+    
+    print()
+    print("-----------------------------------------------------------------------------------------------------------------------------")
     print(f"User Defined hprFilePath: {hpr.hprFilePath}") #debug
     print(f"User Defined outputDir = {hpr.outputDir}") #debug
     print(f"tempDir = {hpr.tempDir}") #debug
@@ -130,6 +132,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
 
     #ITERATE OVER THE HAZARD, SCENARIO, RETURNPERIOD AVAIALABLE COMBINATIONS...
     for hazard in hpr.HazardsScenariosReturnPeriods:
+        print()
         print(f"Hazard: {hazard['Hazard']}") #debug
         
         #SET HPR HAZARD...
@@ -158,6 +161,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
 
         #SCENARIOS/ANALYSIS
         for scenario in hazard['Scenarios']:
+            print()
             print(f"Scenario: {scenario['ScenarioName']}") #debug
 
             #SET HPR SCENARIO...
@@ -173,6 +177,8 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             downloadLink = '' #default value
             scenarioGeographicCount = '' #initialize variable to be changed later
             scenarioGeographicUnit = '' #initialize variable to be changed later
+            scenarioLosses = '' #initialize variable to be changed later
+            scenarioLossesUnit = '' #initialize variable to be changed later
             
             if hazard['Hazard'] == 'earthquake':
                 scenarioMETA["Magnitude"] = hpr.getEarthquakeMagnitude()
@@ -187,16 +193,17 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                 analysisType = 'Deterministic' #USGS FIM
                 """i.e. 'C:\workspace\batchexportOutput\nora\nora_08\\flAnalysisLog.txt'"""
                 logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'flAnalysisLog.txt')
-                analysisDate = getflAnalysisLogDate(logfile)
+                analysisDate = getAnalysisLogDate(logfile)
             if hazard['Hazard'] == 'hurricane':
-                pass
+                analysisType = hpr.getAnalysisType()
             if hazard['Hazard'] == 'tsunami':
                 logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'TsunamiLog.txt')
-                analysisDate = getflAnalysisLogDate(logfile)
+                analysisDate = getAnalysisLogDate(logfile)
 
             #RETURNPERIODS/DOWNLOAD
             for returnPeriod in scenario['ReturnPeriods']:
-                print(f"returnPeriod: {returnPeriod}") #debug
+                print()
+                skipHPR = 0
 
                 #SET HPR RETURNPERIOD...
                 hpr.returnPeriod = returnPeriod
@@ -210,319 +217,326 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                     essentialFacilities = hpr.getEssentialFacilities()
                     if len(results) < 1:
                         print('No results found. Please check your Hazus Package Region and try again.')
+                        skipHPR = 1 #do not try processing the hpr
                 except Exception as e:
                     print(e)
+                    
+                if skipHPR == 0:
+                    #HLL Analysis/Scenario Metadata (some sceneario/analysis level info requires returnperiod/download input)...
+                    geographicCountUnit = hpr.getGeographicCountUnitofResults(results)
+                    scenarioGeographicCount = geographicCountUnit[0]
+                    scenarioGeographicUnit = geographicCountUnit[1]
+                    scenarioLosses = int(hpr.getTotalEconomicLoss())
+                    scenarioLossesUnit = 'USD'
+                    if scenarioLosses >= 1000 and scenarioLosses < 1000000:
+                        scenarioLosses = str(round(scenarioLosses/1000,1))
+                        scenarioLossesUnit = 'thousand'
+                    elif scenarioLosses >= 1000000 and scenarioLosses < 1000000000:
+                        scenarioLosses = str(round(scenarioLosses/1000000,1))
+                        scenarioLossesUnit = 'million'
+                    elif scenarioLosses >= 1000000000 and scenarioLosses < 1000000000000:
+                        scenarioLosses = str(round(scenarioLosses/1000000000,1))
+                        scenarioLossesUnit = 'billion'
+                    elif scenarioLosses >= 1000000000000:
+                        scenarioLosses = str(round(scenarioLosses/1000000000000,1))
+                        scenarioLossesUnit = 'trillion'
+                    else:
+                        pass
 
-                #HLL Analysis/Scenario Metadata (some sceneario/analysis level info requires returnperiod/download input)...
-                geographicCountUnit = hpr.getGeographicCountUnitofResults(results)
-                scenarioGeographicCount = geographicCountUnit[0]
-                scenarioGeographicUnit = geographicCountUnit[1]
-                scenarioLosses = int(hpr.getTotalEconomicLoss())
-                scenarioLossesUnit = 'USD'
-                if scenarioLosses >= 1000 and scenarioLosses < 1000000:
-                    scenarioLosses = str(round(scenarioLosses/1000,1))
-                    scenarioLossesUnit = 'thousand'
-                elif scenarioLosses >= 1000000 and scenarioLosses < 1000000000:
-                    scenarioLosses = str(round(scenarioLosses/1000000,1))
-                    scenarioLossesUnit = 'million'
-                elif scenarioLosses >= 1000000000 and scenarioLosses < 1000000000000:
-                    scenarioLosses = str(round(scenarioLosses/1000000000,1))
-                    scenarioLossesUnit = 'billion'
-                elif scenarioLosses >= 1000000000000:
-                    scenarioLosses = str(round(scenarioLosses/1000000000000,1))
-                    scenarioLossesUnit = 'trillion'
-                else:
-                    pass
+                    #HLL ReturnPeriod/Downloads Metadata
+                    downloadCategory = returnPeriod
 
-                #HLL ReturnPeriod/Downloads Metadata
-                #For shakemap https://earthquake.usgs.gov/scenarios/eventpage/{shakemapID}/executive
-                downloadCategory = returnPeriod
+                                        
+                    #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS (and set some HLL metadata values)...
+                    if hazard['Hazard'] == 'earthquake' and analysisType in ['Deterministic', 'Historic']:
+                        #Deterministic;Shakemap;Scenario
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
+                        downloadCategory = 'Results'
+                    elif hazard['Hazard'] == 'earthquake' and analysisType in ['Probabilistic']:
+                        #Probabilistic
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
+                    elif hazard['Hazard'] == 'flood':
+                        #USGS FIM Deterministic
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), 'STAGE_' + str(returnPeriod).strip())
+                    elif hazard['Hazard'] == 'hurricane' and analysisType in ['Deterministic', 'Historic']:
+                        #Deterministic
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
+                        downloadCategory = 'Results'
+                        if analysisType == 'Deterministic':
+                            scenarioSource = 'Hurrevac/Other'
+                        if analysisType == 'Historic':
+                            scenarioSource = 'Historic'
+                    elif hazard['Hazard'] == 'hurricane' and analysisType in ['Probabilistic']:
+                        #Probabilistic
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip())
+                    elif hazard['Hazard'] == 'tsunami':
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
+                    else:
+                        exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
+                    Path(exportPath).mkdir(parents=True, exist_ok=True) #this may make the earlier HPR dir creation redundant
 
-                #CREATE A DIRECTORY FOR THE OUTPUT FOLDERS (and set some HLL metadata values)...
-                if hazard['Hazard'] == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
-                    #Deterministic;Shakemap;Scenario
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
-                    downloadCategory = 'Results'
-                elif hazard['Hazard'] == 'earthquake' and analysisType in ['Probabilistic']:
-                    #Probabilistic
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
-                elif hazard['Hazard'] == 'flood':
-                    #USGS FIM Deterministic
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), 'STAGE_' + str(returnPeriod).strip())
-                elif hazard['Hazard'] == 'hurricane' and analysisType in ['Deterministic']:
-                    #Deterministic
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip()) 
-                elif hazard['Hazard'] == 'hurricane' and analysisType in ['Probabilistic']:
-                    #Probabilistic
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
-                elif hazard['Hazard'] == 'tsunami':
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
-                else:
-                    exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
-                Path(exportPath).mkdir(parents=True, exist_ok=True) #this may make the earlier HPR dir creation redundant
-
-                #EXPORT Hazus Package Region TO CSV...
-                try:
+                    #EXPORT Hazus Package Region TO CSV...
                     try:
-                        print('Writing results to csv...')
-                        results.toCSV(Path.joinpath(exportPath, 'results.csv'))
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'results.csv')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Results',
-                                                                          'name':'Results.csv',
-                                                                          'icon':'spreadsheet',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Base results not available to export to csv...')
-                        print(e)
-                        
-                    try:
-                        print('Writing building damage by occupancy to CSV')
-                        buildingDamageByOccupancy = hpr.getBuildingDamageByOccupancy()
-                        buildingDamageByOccupancy.toCSV(Path.joinpath(exportPath, 'building_damage_by_occupancy.csv'))
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'building_damage_by_occupancy.csv')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Building Damage',
-                                                                          'name':'Building Damage by Occupancy.csv',
-                                                                          'icon':'spreadsheet',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Building damage by occupancy not available to export to csv...')
-                        print(e)
-                        
-                    try:
-                        print('Writing building damage by type to CSV')
-                        buildingDamageByType = hpr.getBuildingDamageByType()
-                        buildingDamageByType.toCSV(Path.joinpath(exportPath,'building_damage_by_type.csv'))
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'building_damage_by_type.csv')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Building Damage',
-                                                                          'name':'Building Damage by Type.csv',
-                                                                          'icon':'spreadsheet',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Building damage by type not available to export to csv...')
-                        print(e)
-                        
-                    try:
-                        print('Writing damaged facilities to CSV')
-                        essentialFacilities.toCSV(Path.joinpath(exportPath, 'damaged_facilities.csv'))
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'damaged_facilities.csv')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Damaged Facilities',
-                                                                          'name':'Damaged Facilities.csv',
-                                                                          'icon':'spreadsheet',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Damaged facilities not available to export to csv.')
-                        print(e)
-                        
-                    if hpr.hazard == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
                         try:
-                            print('Writing eqShakeMapScenario to CSV')
-                            EQShakeMapScenario = hpr.getEQShakeMapScenario()
-                            EQShakeMapScenario.toCSV(Path.joinpath(exportPath, 'ShakeMap_Scenario.csv'))
+                            print('Writing results to csv...')
+                            results.toCSV(Path.joinpath(exportPath, 'results.csv'))
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
-                            filePath = Path.joinpath(exportPath, 'ShakeMap_Scenario.csv')
+                            filePath = Path.joinpath(exportPath, 'results.csv')
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':downloadCategory,
-                                                                              'subcategory':'Metadata',
-                                                                              'name':'ShakeMap Scenario.csv',
+                                                                              'subcategory':'Results',
+                                                                              'name':'Results.csv',
                                                                               'icon':'spreadsheet',
                                                                               'file':filePathRel,
                                                                               'analysis':scenarioUUID}, ignore_index=True)
                         except Exception as e:
-                            print('eqShakeMapScenario not available to export to csv.')
+                            print('Base results not available to export to csv...')
                             print(e)
-
-                    
-                except Exception as e:
-                    print('Unexpected error exporting CSVs')
-                    print(e)
-                        
-                #EXPORT Hazus Package Region TO Shapefile...
-                try:
-                    try:
-                        print('Writing results to shapefile to zipfile...')
-                        results.toShapefiletoZipFile(Path.joinpath(exportPath, 'results.shp'), 'epsg:4326', 'epsg:4326')
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'results.zip')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Results',
-                                                                          'name':'Results.shp',
-                                                                          'icon':'spatial',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        #print('Base results not available to export to shapefile...')
-                        print('Base results not available to export to shapefile to zipfile...')
-                        print(e)
-                        
-                    try:
-                        print('Writing Damaged facilities to shapefile to zipfile.')
-                        essentialFacilities.toShapefiletoZipFile(Path.joinpath(exportPath, 'damaged_facilities.shp'), 'epsg:4326', 'epsg:4326')
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'damaged_facilities.zip')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Damaged Facilities',
-                                                                          'name':'Damaged Facilities.shp',
-                                                                          'icon':'spatial',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        #print('Damaged facilities not available to export to shapefile...')
-                        print('Damaged facilities not available to export to shapefile to zipfile...')
-                        print(e)
-
-                    try:
-                        print('Writing Hazard Boundary Polygon to shapefile to zipfile...')
-                        #The following two commented out lines encounter ODBC issues on some machines,
-                        #possibly due to 32 and 64bit access driver conflicts
-##                            hpr.getFloodBoundaryPolyName('R')
-##                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
-                        hazardGDF = hpr.getHazardGeoDataFrame()
-                        hazardGDF.toShapefiletoZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'), 'epsg:4326', 'epsg:4326')
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Hazard',
-                                                                          'name':'Hazard Boundary.shp',
-                                                                          'icon':'spatial',
-                                                                          'link':downloadLink,
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Hazard Boundary not available to export to shapefile to zipfile...')
-                        print(e)
-                        
-                except Exception as e:
-                    print(u"Unexpected error exporting Shapefiles: ")
-                    print(e)
-
-
-                    
-                #EXPORT Hazus Package Region TO GeoJSON...
-                try:
-                    try:
-                        print('Writing Results to geojson...')
-                        results.toGeoJSON(Path.joinpath(exportPath, 'results.geojson'))
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'results.geojson')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Results',
-                                                                          'name':'Results.geojson',
-                                                                          'icon':'spatial',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Base results not available to export to geojson')
-                        print(e)
-                        
-                    try:
-                        print('Writing Damaged Facilities to geojson...')
-                        essentialFacilities.toGeoJSON(Path.joinpath(exportPath, 'damaged_facilities.geojson'))
-                        #ADD ROW TO hllMetadataDownload TABLE...
-                        downloadUUID = uuid.uuid4()
-                        filePath = Path.joinpath(exportPath, 'damaged_facilities.geojson')
-                        #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                        filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
-                                                                          'category':downloadCategory,
-                                                                          'subcategory':'Damaged Facilities',
-                                                                          'name':'Damaged Facilities.geojson',
-                                                                          'icon':'spatial',
-                                                                          'file':filePathRel,
-                                                                          'analysis':scenarioUUID}, ignore_index=True)
-                    except Exception as e:
-                        print('Damaged facilities not available to export to geojson.')
-                        print(e)                        
-
-                    try:
-                        print('Writing ImpactArea to geojson...')
-                        econloss = hpr.getEconomicLoss()
-                        if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
-                            econloss.toHLLGeoJSON(Path.joinpath(exportPath, 'impactarea.geojson'))
+                            
+                        try:
+                            print('Writing building damage by occupancy to CSV')
+                            buildingDamageByOccupancy = hpr.getBuildingDamageByOccupancy()
+                            buildingDamageByOccupancy.toCSV(Path.joinpath(exportPath, 'building_damage_by_occupancy.csv'))
                             #ADD ROW TO hllMetadataDownload TABLE...
                             downloadUUID = uuid.uuid4()
-                            filePath = Path.joinpath(exportPath, 'impactarea.geojson')
+                            filePath = Path.joinpath(exportPath, 'building_damage_by_occupancy.csv')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Building Damage',
+                                                                              'name':'Building Damage by Occupancy.csv',
+                                                                              'icon':'spreadsheet',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('Building damage by occupancy not available to export to csv...')
+                            print(e)
+                            
+                        try:
+                            print('Writing building damage by type to CSV')
+                            buildingDamageByType = hpr.getBuildingDamageByType()
+                            buildingDamageByType.toCSV(Path.joinpath(exportPath,'building_damage_by_type.csv'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'building_damage_by_type.csv')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Building Damage',
+                                                                              'name':'Building Damage by Type.csv',
+                                                                              'icon':'spreadsheet',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('Building damage by type not available to export to csv...')
+                            print(e)
+                            
+                        try:
+                            print('Writing damaged facilities to CSV')
+                            essentialFacilities.toCSV(Path.joinpath(exportPath, 'damaged_facilities.csv'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'damaged_facilities.csv')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Damaged Facilities',
+                                                                              'name':'Damaged Facilities.csv',
+                                                                              'icon':'spreadsheet',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('Damaged facilities not available to export to csv.')
+                            print(e)
+                            
+                        if hpr.hazard == 'earthquake' and analysisType in ['Historic', 'Deterministic']:
+                            try:
+                                print('Writing eqShakeMapScenario to CSV')
+                                EQShakeMapScenario = hpr.getEQShakeMapScenario()
+                                EQShakeMapScenario.toCSV(Path.joinpath(exportPath, 'ShakeMap_Scenario.csv'))
+                                #ADD ROW TO hllMetadataDownload TABLE...
+                                downloadUUID = uuid.uuid4()
+                                filePath = Path.joinpath(exportPath, 'ShakeMap_Scenario.csv')
+                                #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                                filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                                hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                                  'category':downloadCategory,
+                                                                                  'subcategory':'Metadata',
+                                                                                  'name':'ShakeMap Scenario.csv',
+                                                                                  'icon':'spreadsheet',
+                                                                                  'file':filePathRel,
+                                                                                  'analysis':scenarioUUID}, ignore_index=True)
+                            except Exception as e:
+                                print('eqShakeMapScenario not available to export to csv.')
+                                print(e)
+
+                        
+                    except Exception as e:
+                        print('Unexpected error exporting CSVs')
+                        print(e)
+                            
+                    #EXPORT Hazus Package Region TO Shapefile...
+                    try:
+                        try:
+                            print('Writing results to shapefile to zipfile...')
+                            results.toShapefiletoZipFile(Path.joinpath(exportPath, 'results.shp'), 'epsg:4326', 'epsg:4326')
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'results.zip')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Results',
+                                                                              'name':'Results.shp',
+                                                                              'icon':'spatial',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            #print('Base results not available to export to shapefile...')
+                            print('Base results not available to export to shapefile to zipfile...')
+                            print(e)
+                            
+                        try:
+                            print('Writing Damaged facilities to shapefile to zipfile.')
+                            essentialFacilities.toShapefiletoZipFile(Path.joinpath(exportPath, 'damaged_facilities.shp'), 'epsg:4326', 'epsg:4326')
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'damaged_facilities.zip')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Damaged Facilities',
+                                                                              'name':'Damaged Facilities.shp',
+                                                                              'icon':'spatial',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            #print('Damaged facilities not available to export to shapefile...')
+                            print('Damaged facilities not available to export to shapefile to zipfile...')
+                            print(e)
+
+                        try:
+                            print('Writing Hazard Boundary Polygon to shapefile to zipfile...')
+                            #The following two commented out lines encounter ODBC issues on some machines,
+                            #possibly due to 32 and 64bit access driver conflicts
+    ##                            hpr.getFloodBoundaryPolyName('R')
+    ##                            hpr.exportFloodHazardPolyToShapefileToZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'))
+                            hazardGDF = hpr.getHazardGeoDataFrame()
+                            hazardGDF.toShapefiletoZipFile(Path.joinpath(exportPath, 'hazardBoundaryPoly.shp'), 'epsg:4326', 'epsg:4326')
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'hazardBoundaryPoly.zip')
                             #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
                             filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
                             hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
                                                                               'category':downloadCategory,
                                                                               'subcategory':'Hazard',
-                                                                              'name':'Impact Area.geojson',
+                                                                              'name':'Hazard Boundary.shp',
+                                                                              'icon':'spatial',
+                                                                              'link':downloadLink,
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('Hazard Boundary not available to export to shapefile to zipfile...')
+                            print(e)
+                            
+                    except Exception as e:
+                        print(u"Unexpected error exporting Shapefiles: ")
+                        print(e)
+
+
+                        
+                    #EXPORT Hazus Package Region TO GeoJSON...
+                    try:
+                        try:
+                            print('Writing Results to geojson...')
+                            results.toGeoJSON(Path.joinpath(exportPath, 'results.geojson'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'results.geojson')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Results',
+                                                                              'name':'Results.geojson',
                                                                               'icon':'spatial',
                                                                               'file':filePathRel,
                                                                               'analysis':scenarioUUID}, ignore_index=True)
-                        else:
-                            print('no econ loss for HLL geojson')
+                        except Exception as e:
+                            print('Base results not available to export to geojson')
+                            print(e)
+                            
+                        try:
+                            print('Writing Damaged Facilities to geojson...')
+                            essentialFacilities.toGeoJSON(Path.joinpath(exportPath, 'damaged_facilities.geojson'))
+                            #ADD ROW TO hllMetadataDownload TABLE...
+                            downloadUUID = uuid.uuid4()
+                            filePath = Path.joinpath(exportPath, 'damaged_facilities.geojson')
+                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                            filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                              'category':downloadCategory,
+                                                                              'subcategory':'Damaged Facilities',
+                                                                              'name':'Damaged Facilities.geojson',
+                                                                              'icon':'spatial',
+                                                                              'file':filePathRel,
+                                                                              'analysis':scenarioUUID}, ignore_index=True)
+                        except Exception as e:
+                            print('Damaged facilities not available to export to geojson.')
+                            print(e)                        
+
+                        try:
+                            print('Writing ImpactArea to geojson...')
+                            econloss = hpr.getEconomicLoss()
+                            if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
+                                econloss.toHLLGeoJSON(Path.joinpath(exportPath, 'impactarea.geojson'))
+                                #ADD ROW TO hllMetadataDownload TABLE...
+                                downloadUUID = uuid.uuid4()
+                                filePath = Path.joinpath(exportPath, 'impactarea.geojson')
+                                #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                                filePathRel = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                                hllMetadataDownload = hllMetadataDownload.append({'id':downloadUUID,
+                                                                                  'category':downloadCategory,
+                                                                                  'subcategory':'Hazard',
+                                                                                  'name':'Impact Area.geojson',
+                                                                                  'icon':'spatial',
+                                                                                  'file':filePathRel,
+                                                                                  'analysis':scenarioUUID}, ignore_index=True)
+                            else:
+                                print('no econ loss for HLL geojson')
+                                
+                        except Exception as e:
+                            print('ImpactArea not available to export to geojson.')
+                            print(e)
+
+                        try:
+                            """This section is to write the same impact area geojson but at the scenario level."""
+                            print('Writing ImpactArea Scenario to geojson...')
+                            econloss = hpr.getEconomicLoss()
+                            if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
+                                econloss.toHLLGeoJSON(Path.joinpath(exportPath.parent, 'impactarea.geojson'))
+                                #ADD ROW TO hllMetadataDownload TABLE...
+                                filePath = Path.joinpath(exportPath.parent, 'impactarea.geojson')
+                                #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
+                                scenarioGEOM = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
+                            else:
+                                print('no econ loss for HLL Scenario geojson')
+                        except Exception as e:
+                            print('ImpactArea Scenario not available to export to geojson.')
+                            print(e)
                             
                     except Exception as e:
-                        print('ImpactArea not available to export to geojson.')
+                        print('Unexpected error exporting to GeoJSON:')
                         print(e)
-
-                    try:
-                        """This section is to write the same impact area geojson but at the scenario level."""
-                        print('Writing ImpactArea Scenario to geojson...')
-                        econloss = hpr.getEconomicLoss()
-                        if len(econloss.loc[econloss['EconLoss'] > 0]) > 0:
-                            econloss.toHLLGeoJSON(Path.joinpath(exportPath.parent, 'impactarea.geojson'))
-                            #ADD ROW TO hllMetadataDownload TABLE...
-                            filePath = Path.joinpath(exportPath.parent, 'impactarea.geojson')
-                            #filePathRel = str(filePath.relative_to(Path(hpr.outputDir))) #excludes sr name; for non-aggregate hll metadata
-                            scenarioGEOM = str(filePath.relative_to(Path(hpr.outputDir).parent)) #includes SR name; for aggregate hll metadata
-                        else:
-                            print('no econ loss for HLL Scenario geojson')
-                    except Exception as e:
-                        print('ImpactArea Scenario not available to export to geojson.')
-                        print(e)
-                        
-                except Exception as e:
-                    print('Unexpected error exporting to GeoJSON:')
-                    print(e)
 
             #Analysis Metadata part two of two...
             #ADD ROW TO hllMetadataScenario TABLE...
@@ -547,7 +561,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
     #EXPORT HLL METADATA (NOTE: openpyxl (*et_xmlfile, &jdcal)) not installed, can't export to excel)...
     ##hllMetadataPath = str(Path.joinpath(Path(outputPath), "exportHLLMetadata.xlsx"))
     ##hllMetadata.to_excel(hllMetadataPath)
-            
+    
     hllMetadataEventPath = str(Path.joinpath(Path(outputPath), "Event.csv"))
     hllMetadataEvent.to_csv(hllMetadataEventPath, index=False)
 
@@ -564,6 +578,9 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
     #DELETE UNZIPPED HPR FOLDER...
     if deleteTempDir == 1:
         hpr.deleteTempDir()
+
+
+    print("-----------------------------------------------------------------------------------------------------------------------------")
 
 
 def aggregateHllMetadataFiles(directory):
@@ -641,7 +658,7 @@ if __name__ == '__main__':
         sys.stderr = sys.stdout
         print(f'Done. Check the {logfile}.')
         
-        print('Aggregating HLL Metata...')
+        print('Aggregating HLL Metadata...')
         aggregateHllMetadataFiles(outDir)
         print('Done.')
         
