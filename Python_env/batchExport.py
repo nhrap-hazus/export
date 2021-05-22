@@ -17,6 +17,8 @@ How to use: Define your input folder containing hpr files and define
 
 """
 
+import time
+from datetime import timedelta
 from hazpy.legacy import HazusPackageRegion
 from pathlib import Path
 import os
@@ -618,6 +620,8 @@ def aggregateHllMetadataFiles(directory):
         
 if __name__ == '__main__':
     print('Running batch export...')
+    startTime = time.time()
+    print(time.ctime(startTime))
 
     #USER DEFINED VALUES
     hprDir = r'C:/workspace/hpr'                    #The directory containing hpr files
@@ -643,6 +647,7 @@ if __name__ == '__main__':
         logfile = Path.joinpath(Path(outDir),'batchexportlog.txt')
         sys.stdout = open(logfile, 'w+')
         sys.stderr = sys.stdout
+        print("startTime:", time.ctime(startTime))
         
         for hpr in hprList:
             try:
@@ -651,7 +656,11 @@ if __name__ == '__main__':
             except Exception as e:
                 print('Exception:')
                 print(e)
-                
+
+        endTime = time.time()
+        print("endTime:", time.ctime(endTime))
+        print("Elapsed Time (Hour:Minute:Seconds):", str(timedelta(seconds=endTime-startTime)))
+        
         sys.stdout.close()
         sys.stderr.close()
         sys.stdout = stdout_fileno
@@ -661,7 +670,8 @@ if __name__ == '__main__':
         print('Aggregating HLL Metadata...')
         aggregateHllMetadataFiles(outDir)
         print('Done.')
-        
+        print(time.ctime())
+
         print()
     else:
         print('no HPR files found')
