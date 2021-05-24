@@ -20,7 +20,7 @@ The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be install
 
 5. Run the Hazus Export Tool to install hazpy in the hazus_env Anaconda virtual environment (Read the README for the Hazus Export Tool on the steps)
 
-6. If the python package 'xhtml2' is not installed in the Anaconda 'hazus_env' virtual environment you may need to do so manually using Anaconda. It will also install six other required python packages._
+6. If the python package 'xhtml2' is not installed in the Anaconda 'hazus_env' virtual environment you may need to do so manually using Anaconda. It will also install six other required python packages.
 
 ## Documentation
 
@@ -29,35 +29,64 @@ folder: "EQDataDictionary", "TSDataDictionary", "FLDataDictionary", and "HUDataD
 
 **Hazus HPR Version Support:**
 
-The batchExport script has been tested on HPR created by Hazus 3.1 and up. Hazus 2.1 created HPR and lower will likely fail. 
-For HPR versions lower than 3.1 you could try using Hazus 4.2.3 or 5 to import the older HPR so that Hazus will update it 
-and then export it to a new HPR.
+* The batchExport script has been tested on HPR created by Hazus 3.1 and up. 
+* Hazus 3.0 created HPR and lower will likely fail. 
+* For HPR versions lower than 3.1 it's recommended to use Hazus 4.2.3 or Hazus 5.0 to recreate the HPR.
+  * There was a large restructing of Hazus in 3.0 and the datum change probably happened in 3.1.
 
-There is a script in python_env that can be used to look in a directory and subdirectory for HPR files and read out what version of Hazus they
+There is a script (batchHPRComment.py) in python_env that can be used to look in a directory and subdirectory for HPR files and read out what version of Hazus they
 were created by. It will also notify if the HPR is not a valid zipfile and would thus fail to be run in the batchExport script.
 
 **Hazus Loss Library (HLL) Metadata:**
 
 There are three csv files named 'Analysis.csv', 'Download.csv', and 'Event.csv' that should exist in the batchExport output folder 
-for each HPR file/StudyRegion.
+for each HPR file/StudyRegion, these are specific to that HPR and contain relative paths, however these relative paths are set for
+the next folder up. A the parent/root folder of the batchexport output (as defined by the user in the batchExport.py) there are 
+three csv files named 'Analysis.csv', 'Download.csv', and 'Event.csv' that are the aggreagted files from each HPR. These csv files
+are the HLL Metadata files and are used by the HLL batch upload process.
+
+If a user is running multiple batches there is another script (batchExportPostHLLMetadataAggregate) that can be used to 
+regenerate those main HLL metadata files. Follow the same steps to run batchExport.py however you only need to designate 
+the input folder that contains all of the hpr batchexport output folders with the three HLL metadata files each.
 
 HLL uses field validation for data types and fields with choices (e.g. hazard, analysisType), but for fields like source, any string will do.
-Therefore if it says "FIX ME: USER INPUT NEEDED", it is possible to upload it like that.
+Therefore if it says something like "FIX ME: USER INPUT NEEDED", it is possible to upload it like that.
 
 Event.csv
 
-* If the even is historic then it should have a value in the date field in YYYY-MM-DD.
+![Event.csv](Images/batchEventCSV.png "Event.csv")
+
+* User can change the name. Max 50 characters (may be larger).
+* If the even is historic then it should have a value in the date field in YYYY-MM-DD format.
+* Required fields: id, name
 
 Analysis.csv
 
-* You can change the 'name' field to change what HLL displays.
-* You can change the 'analysisType' to historic, deterministic or probabilistic.
-* The 'date' refers to the date of the scenario analysis.
-* You can change 'modifiedInventory' to true or false.
+![Event.csv](Images/batchAnalysisCSV.png "Event.csv")
+
+* You can change the 'name' field to change what HLL displays. Max 100 characters (may be larger).
+* The 'date' refers to the date of the scenario analysis. 
+  * Hurricane, Tsunami HPR do not yet have Analysis Date
+  * Needs to be in 'YYYY-MM-DD' format
+* You can change 'modifiedInventory' to true or false. Default is false.
+* You can change the 'source'. Max 100 characters (may be larger).
+* Meta can contain any info.
+  * This is a json object or python dictionary, one level deep.
+  * Need to use double qoutes and separate each item by spaces i.e. {"firstname":"Patty","nickname":"Pat"}
+* event must match an id in Event.csv
+* Required fields: id, name, hazard, analysisType, date, source, modifiedInventory, event
 
 Download.csv
 
+![Event.csv](Images/batchDownloadCSV.png "Event.csv")
+
 * You can add a url to the 'link' field for a row and HLL button for that item will open the link instead of the file.
+* Category and subcategory can be changed to group and sort the files for an analysis.
+* Meta can contain any info.
+  * This is a json object or python dictionary, one level deep.
+  * Need to use double qoutes and separate each item by spaces i.e. {"firstname":"Patty","nickname":"Pat"}
+* analysis must match an id in Analysis.csv
+* Required fields: id, category, subcategroy, name, icon, analysis
 
 **Renaming Study Regions and Scenarios:**
 
@@ -70,16 +99,6 @@ To rename the Scenario you can open the 'Analysis.csv' and modify the value in t
 If the script fails without dropping the bk_* (where * is the name of the hpr file or its .bk sql server backup database) database then you 
 will need to do it manually. Using SQL Server Management Studio you can DELETE the bk_* database and using Windows explorer you can delete 
 the temp folder that contains the unzipped contents of the HPR file.
-
-**More Work To Be Done:**
-- [ ] HLL Metadata (analysisType, date, and modifiedInventory fields)
-- [ ] Event|HPR|SR boundary geojson output
-- [ ] Analysis|Scenario|Studycase boundary geojson output
-- [ ] More testing for EQ, HU, TS perils
-- [ ] EQ impact area and hazard boundary output
-- [ ] HU impact area and hazard boundary output
-- [ ] TS hazard boundary output
-- [ ] Better script launch steps, i.e. double click one python file to run instead of Anaconda hazus_env terminal.
 
 **Table of Possible Hazard/Scenario/Scenario Type/Return Period Combinations (NOT YET COMPLETE):**
 
@@ -96,6 +115,8 @@ the temp folder that contains the unzipped contents of the HPR file.
 |studyregion1|TS|1: user defined name?|n/a|n/a|
 
 Average Annualized Loss: ?
+
+Multi-Hazard: ?
 
 ## Contact
 
