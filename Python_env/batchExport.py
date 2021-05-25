@@ -144,8 +144,8 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
         exportPath = Path.joinpath(Path(outputPath))
         try:
             print('Writing StudyRegionBoundary to geojson...')
-            hzBoundary = hpr.getHzBoundary()
-            hzBoundary.toGeoJSON(Path.joinpath(exportPath, 'StudyRegionBoundary.geojson'))
+            studyRegionBoundary = hpr.getStudyRegionBoundary()
+            studyRegionBoundary.toGeoJSON(Path.joinpath(exportPath, 'StudyRegionBoundary.geojson'))
         except Exception as e:
             print('StudyRegionBoundary not available to export to geojson')
             print(e)
@@ -199,7 +199,7 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
             if hazard['Hazard'] == 'hurricane':
                 analysisType = hpr.getAnalysisType()
             if hazard['Hazard'] == 'tsunami':
-                logfile = Path.joinpath(Path(hpr.tempDir), scenario['ScenarioName'],'TsunamiLog.txt')
+                logfile = Path.joinpath(Path(hpr.tempDir),'TsunamiLog.txt')
                 analysisDate = getAnalysisLogDate(logfile)
 
             #RETURNPERIODS/DOWNLOAD
