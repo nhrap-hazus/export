@@ -52,7 +52,23 @@ the input folder that contains all of the hpr batchexport output folders with th
 HLL uses field validation for data types and fields with choices (e.g. hazard, analysisType), but for fields like source, any string will do.
 Therefore if it says something like "FIX ME: USER INPUT NEEDED", it is possible to upload it like that.
 
-Event.csv
+Also note that if you are using excel to view the csv files that it will try and determine the data type for each
+column and display it with defaults. This is most noticeable with dates where the csv its stored as YYYY-MM-DD but
+excel may display it as MM-DD-YYYY.
+
+#### Output Folder ####
+
+![Output Folder](Images/batchOutputFolder.png "Output Folder")
+![Output Folder Files](Images/batchHazardScenarioRPFolder.png "Output Folder Files")
+
+* For each batch export script run it will generate the output folder which includes a folder for each HPR file, the 
+HLL Metadata files (Event.csv, Analysis.csv, Download.csv) and a logfile. The HPR folder will have a directory for each
+hazard, scenario, return period permutation and files in different directories depending on their relationship to the event.
+* If the batchExport.py script option of deleting the temp directory is set to 1/true then the *_temp folders will be deleted.
+* The batchexportlog.txt contains debug level information of the script run and timestamp and run time. This is a good spot
+to check for any errors or issues for an HPR.
+
+#### Event.csv ####
 
 ![Event.csv](Images/batchEventCSV.png "Event.csv")
 
@@ -60,7 +76,7 @@ Event.csv
 * If the even is historic then it should have a value in the date field in YYYY-MM-DD format.
 * Required fields: id, name
 
-Analysis.csv
+#### Analysis.csv ####
 
 ![Event.csv](Images/batchAnalysisCSV.png "Event.csv")
 
@@ -76,12 +92,13 @@ Analysis.csv
 * event must match an id in Event.csv
 * Required fields: id, name, hazard, analysisType, date, source, modifiedInventory, event
 
-Download.csv
+#### Download.csv ####
 
 ![Event.csv](Images/batchDownloadCSV.png "Event.csv")
 
 * You can add a url to the 'link' field for a row and HLL button for that item will open the link instead of the file.
 * Category and subcategory can be changed to group and sort the files for an analysis.
+* Probabilistic analysis will have an Annual return period and it will not have a hazardBoundaryPoly.zip.
 * Meta can contain any info.
   * This is a json object or python dictionary, one level deep.
   * Need to use double qoutes and separate each item by spaces i.e. {"firstname":"Patty","nickname":"Pat"}
@@ -104,19 +121,15 @@ the temp folder that contains the unzipped contents of the HPR file.
 
 |HPR / Study Region|Hazard|Scenario|Scenario Type|Return Period|
 |---     |---   |---     |---          |---          |
-|studyregion1|EQ|1: user defined name?|probabilistic|8: 100, 250, 500, 750, 1000, 1500, 2000, 2500|
+|studyregion1|EQ|1: user defined name?|probabilistic|8/9: 100, 250, 500, 750, 1000, 1500, 2000, 2500, Annual|
 |studyregion1|EQ|1: user defined name?|deterministic|1: user defined name?|
 |studyregion1|FL|1+: StudyCase: user defined name?|riverine|1+: user defined name?|
 |studyregion1|FL|1+: StudyCase: user defined name?|coastal|1+: user defined name?|
 |studyregion1|FL|1+: StudyCase: user defined name?|riverine & coastal|1+: user defined name?|
 |studyregion1|FL|1: StudyCase: user defined name?|surge|1: user defined name?|
-|studyregion1|HU|1: user defined name?|probabilistic|7: 10, 20, 50, 100, 200, 500, 1000|
+|studyregion1|HU|1: user defined name?|probabilistic|7/8: 10, 20, 50, 100, 200, 500, 1000, Annual|
 |studyregion1|HU|1: user defined name?|deterministic|1: user defined name?|
 |studyregion1|TS|1: user defined name?|n/a|n/a|
-
-Average Annualized Loss: ?
-
-Multi-Hazard: ?
 
 ## Contact
 
