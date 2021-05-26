@@ -19,7 +19,6 @@ from PIL import ImageTk, Image
 from time import time, sleep
 import json
 
-
 class App():
     def __init__(self):
         """ tkinter application that uses HazPy to export Hazus results"""
@@ -582,7 +581,10 @@ class App():
                     self.text_outputDirectory.delete("1.0", 'end-1c')
                     self.text_outputDirectory.insert(
                         "1.0", self.outputDirectory + '/' + self.studyRegion.name)
-        except:
+        except Exception as e:
+            print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print(exc_type, exc_obj, exc_tb.tb_lineno)
             ctypes.windll.user32.MessageBoxW(
                 None, u"Unable to initialize the Study Region. Please select another Study Region to continue. Error: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
 
