@@ -280,7 +280,7 @@ class App():
                     reportSubtitle = self.text_reportSubtitle.get("1.0", 'end-1c')
                     if len(reportSubtitle) > 0:
                         self.studyRegion.report.subtitle = reportSubtitle
-                    self.studyRegion.report.save(outputPath + '/report_summary.pdf', build=True)
+                    self.studyRegion.report.save(outputPath + '/report_summary.pdf', premade='')
                 except:
                     ctypes.windll.user32.MessageBoxW(
                         None, u"Unexpected error exporting the PDF: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
@@ -581,10 +581,7 @@ class App():
                     self.text_outputDirectory.delete("1.0", 'end-1c')
                     self.text_outputDirectory.insert(
                         "1.0", self.outputDirectory + '/' + self.studyRegion.name)
-        except Exception as e:
-            print(e)
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, exc_obj, exc_tb.tb_lineno)
+        except:
             ctypes.windll.user32.MessageBoxW(
                 None, u"Unable to initialize the Study Region. Please select another Study Region to continue. Error: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
 

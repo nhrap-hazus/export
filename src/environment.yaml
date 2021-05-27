@@ -42,7 +42,6 @@ dependencies:
   - geotiff=1.6.0=h8884d1a_3
   - gettext=0.19.8.1=hb01d8f6_1002
   - glib=2.65.0=he4de6d7_0
-  - hazpy=0.0.1=py39_0
   - hdf4=4.2.13=h0e5069d_1004
   - hdf5=1.10.6=nompi_h5268f04_1114
   - html5lib=1.1=pyh9f0ad1d_0
@@ -101,6 +100,7 @@ dependencies:
   - paramiko=2.7.2=pyh9f0ad1d_0
   - patsy=0.5.1=py_0
   - pcre=8.44=ha925a31_0
+  - pdfrw=0.4=pyhd8ed1ab_2
   - pillow=8.1.0=py39hbc3ea3a_1
   - pip=21.0.1=pyhd8ed1ab_0
   - poppler=0.89.0=h0cd1227_0
@@ -165,3 +165,6 @@ dependencies:
   - xz=5.2.5=h62dcd97_1
   - zlib=1.2.11=vc14h1cdd9ab_1
   - zstd=1.4.8=h4e2f164_1
+  - pip:
+      - osgeo==0.0.0
+      - git+https://github.com/nhrap-dev/hazpy.git@feat-add-fillable-reports-JIRA-755
