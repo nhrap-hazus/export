@@ -27,15 +27,21 @@ The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be install
 For information about the fields, values and units found in exported Hazus results data, please refer to the guide sheets in the data-dictionaries 
 folder: "EQDataDictionary", "TSDataDictionary", "FLDataDictionary", and "HUDataDictionary". https://github.com/nhrap-hazus/export/tree/master/data-dictionaries 
 
-**Hazus HPR Version Support:**
+**Hazus Version Support:**
 
 * The batchExport script has been tested on HPR created by Hazus 3.1 and up. 
-* Hazus 3.0 created HPR and lower will likely fail. 
-* For HPR versions lower than 3.1 it's recommended to use Hazus 4.2.3 or Hazus 5.0 to recreate the HPR.
-  * There was a large restructing of Hazus in 3.0 and the datum change probably happened in 3.1.
-
-There is a script (batchHPRComment.py) in python_env that can be used to look in a directory and subdirectory for HPR files and read out what version of Hazus they
+  * Hazus 3.0 created HPR and lower will likely fail and are not supported. The script will skip over them.
+  * For HPR versions lower than 3.1 it's recommended to use Hazus 4.2.3 or Hazus 5.0 to recreate the HPR.
+    * There was a large restructing of Hazus in 3.0 and the datum change probably happened in 3.1.
+* There is a script (batchHPRComment.py) in python_env that can be used to look in a directory and subdirectory for HPR files and read out what version of Hazus they
 were created by. It will also notify if the HPR is not a valid zipfile and would thus fail to be run in the batchExport script.
+
+**Hazard Support:**
+* EQ, FL, HU, TS single hazard are supported
+* EQ AAL is not fully supported
+* Multi-Hazard is not fully supported
+* User Defined Inventory is not supported
+
 
 **Hazus Loss Library (HLL) Metadata:**
 
