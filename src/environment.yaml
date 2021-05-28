@@ -167,4 +167,4 @@ dependencies:
   - zstd=1.4.8=h4e2f164_1
   - pip:
       - osgeo==0.0.0
-      - git+https://github.com/nhrap-dev/hazpy.git@feat-add-fillable-reports-JIRA-755
+      - git+https://github.com/nhrap-dev/hazpy.git@dev
