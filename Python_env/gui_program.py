@@ -19,7 +19,6 @@ from PIL import ImageTk, Image
 from time import time, sleep
 import json
 
-
 class App():
     def __init__(self):
         """ tkinter application that uses HazPy to export Hazus results"""
@@ -281,7 +280,7 @@ class App():
                     reportSubtitle = self.text_reportSubtitle.get("1.0", 'end-1c')
                     if len(reportSubtitle) > 0:
                         self.studyRegion.report.subtitle = reportSubtitle
-                    self.studyRegion.report.save(outputPath + '/report_summary.pdf', build=True)
+                    self.studyRegion.report.save(outputPath + '/report_summary.pdf', premade='')
                 except:
                     ctypes.windll.user32.MessageBoxW(
                         None, u"Unexpected error exporting the PDF: " + str(sys.exc_info()[0]), u'HazPy - Message', 0)
