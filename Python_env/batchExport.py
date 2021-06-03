@@ -272,8 +272,11 @@ def exportHPR(hprFile, outputDir, deleteDB=1, deleteTempDir=1):
                                 scenarioSource = 'Historic'
                         elif hazard['Hazard'] == 'hurricane' and analysisType in ['Probabilistic']:
                             #Probabilistic
+                            if str(downloadCategory) == '0':
+                                downloadCategory = 'Annualized'
                             exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip())
                         elif hazard['Hazard'] == 'tsunami':
+                            downloadCategory = 'Results'
                             exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip())
                         else:
                             exportPath = Path.joinpath(Path(outputPath), str(hazard['Hazard']).strip(), str(scenario['ScenarioName']).strip(), str(returnPeriod).strip()) 
