@@ -6,16 +6,16 @@ The Hazus Export Tool is developed using the Hazus Python Package, HazPy. HazPy 
 
 ## Requirements
 
-The Hazus Export tool requires Hazus, ArcGIS Desktop, and Anaconda to be installed on your computer. Anaconda is a free software that automatically manages all Python packages required to run Hazus open source tools - including the Hazus Python package: https://fema-nhrap.s3.amazonaws.com/Hazus/Python/build/html/index.html
+The Hazus Export tool requires Hazus, ArcGIS Desktop, and conda to be installed on your computer. Conda is a free software package manager that automatically manages all Python packages required to run Hazus open source tools - including the Hazus Python package: https://fema-nhrap.s3.amazonaws.com/Hazus/Python/build/html/index.html - conda can be installed with Miniforge.
 
-1. Go to https://www.anaconda.com/distribution/
+1. Go to https://github.com/conda-forge/miniforge/#download
 
-2. Download Anaconda for Python 3
+2. Download Minforge3 for your operating system
 
 3. Complete the installation. During installation, make sure the following options are checked:
 
-   - [x] **Add Anaconda to my PATH environment variable**
-   - [x] Register Anaconda as my default Python
+   - [x] **Add conda to my PATH environment variable**
+   - [x] Register conda as my default Python
 
 ## Documentation
 

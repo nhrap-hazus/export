@@ -1,9 +1,8 @@
-name: hazus_env
+name: hazus_export_env
 channels:
   - nhrap
   - nsls2forge
   - conda-forge
-  - anaconda
   - defaults
 dependencies:
   - affine=2.3.0=py_0
@@ -25,6 +24,7 @@ dependencies:
   - click-plugins=1.1.1=py_0
   - cligj=0.7.1=pyhd8ed1ab_0
   - configparser=5.0.1=py_0
+  - contextily=1.1.0=pyhd8ed1ab_0
   - cryptography=3.3.1=py39h0878f49_1
   - curl=7.71.1=h4b64cdc_8
   - cycler=0.10.0=py_2
@@ -36,7 +36,6 @@ dependencies:
   - freetype=2.10.4=h546665d_1
   - freexl=1.0.5=hd288d7e_1002
   - future=0.18.2=py39hcbf5309_3
-  - gdal=3.1.4=py39hda8168b_0
   - geopandas=0.8.2=pyhd8ed1ab_0
   - geos=3.8.1=he025d50_0
   - geotiff=1.6.0=h8884d1a_3
@@ -166,5 +165,6 @@ dependencies:
   - zlib=1.2.11=vc14h1cdd9ab_1
   - zstd=1.4.8=h4e2f164_1
   - pip:
-      - osgeo==0.0.0
-      - git+https://github.com/nhrap-dev/hazpy.git@dev
+      - gdal==3.1.4
+      - pymupdf==1.18.14
+      - colour==0.1.5
