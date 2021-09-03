@@ -19,7 +19,7 @@ How to use: Define your input folder containing hpr files and define
 
 import time
 from datetime import timedelta
-from hazpy.legacy import HazusPackageRegion
+from hazpy.hazuspackageregion import HazusPackageRegion
 from pathlib import Path
 import os
 import pandas as pd
