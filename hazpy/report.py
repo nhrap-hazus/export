@@ -1,27 +1,29 @@
-import datetime
-import os
-import shutil
-import sys
-
-import fitz
-import geopandas as gpd
-import matplotlib.patheffects as pe
-import matplotlib.ticker as ticker
-import pandas as pd
-import seaborn as sns
-import warnings
 from colour import Color
 from jenkspy import jenks_breaks as nb
-#import math
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger
 from PyPDF2.generic import BooleanObject, IndirectObject, NameObject, TextStringObject, DictionaryObject, NumberObject
+from reportlab.pdfgen import canvas
 from shapely.wkt import loads
 from uuid import uuid4 as uuid
-#from xhtml2pdf import pisa
+
 import contextily as cx
+import datetime
+import fitz
+import geopandas as gpd
+import io
+import matplotlib.ticker as ticker
+import matplotlib.patheffects as pe
+import os
+import pandas as pd
+import seaborn as sns
+import shutil
+import sys
+import warnings
+
+#from xhtml2pdf import pisa
 
 # Disable pandas warnings
 warnings.filterwarnings('ignore')
@@ -71,32 +73,33 @@ class Report:
         self.icon = self.assets[icon]
         self.templateFillableLocation = 'Python_env/assets/templates'
         self.disclaimer = """The estimates of social and economic impacts contained in this report were produced using Hazus loss estimation methodology software which is based on current scientific and engineering knowledge. There are uncertainties inherent in any loss estimation
-            technique. Therefore, there may be significant differences between the modeled results contained in this report and the actual social and economic losses following a specific {}. These results can be improved by using enhanced inventory, geotechnical,
-            and observed ground motion data.""".format(self.hazard)
+            technique. Therefore, there may be significant differences between the modeled results contained in this report and the actual social and economic losses following a specific {}.""".format(self.hazard)
         self.getCounties = studyRegionClass.getCounties
+        self.getStates = studyRegionClass.getStates
         self._tempDirectory = 'hazpy-report-temp'
 
     def format_tick(self, num, pos):
+        num = float('{:.3g}'.format(num))
         magnitude = 0
         while abs(num) >= 1000:
             magnitude += 1
             num /= 1000.0
-        # add more suffixes if you need them
         if self.hazard == 'flood':
-            #return '$%.0f%s' % (num, ['', ' K', ' M', ' B', ' T'][magnitude])
-            return '$%.2f%s' % (num, ['', ' K', ' M', ' B', ' T'][magnitude])
+            formatted_number = '${}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
         else:
-            #return '%.0f%s' % (num, ['', ' K', ' M', ' B', ' T'][magnitude])
-            return '%.2f%s' % (num, ['', ' K', ' M', ' B', ' T'][magnitude])
+            formatted_number = '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+        return formatted_number
 
-    # def format_tick(self, num, pos):
-    #     millnames = ['',' K',' M',' B',' T']
-    #     n = float(num)
-    #     millidx = max(0,min(len(millnames)-1,
-    #                         int(math.floor(0 if n == 0 else math.log10(abs(n))/3))))
-    #     return '{:.0f}{}'.format(n / 10**(3 * millidx), millnames[millidx])
-
+# TODO: Remove/replace/refactor with format_tick?? - BC 
     def abbreviate(self, number):
+        """[summary]
+
+        Args:
+            number ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         try:
             digits = 0
             number = float(number)
@@ -120,6 +123,16 @@ class Report:
             return str(number)
 
     def addCommas(self, number, abbreviate=False, truncate=False):
+        """[summary]
+
+        Args:
+            number ([type]): [description]
+            abbreviate (bool, optional): [description]. Defaults to False.
+            truncate (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            [type]: [description]
+        """
         if truncate:
             number = int(round(number))
         if abbreviate:
@@ -129,6 +142,16 @@ class Report:
         return number
 
     def toDollars(self, number, abbreviate=False, truncate=False):
+        """[summary]
+
+        Args:
+            number ([type]): [description]
+            abbreviate (bool, optional): [description]. Defaults to False.
+            truncate (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            [type]: [description]
+        """
         if truncate:
             number = int(round(number))
         if abbreviate:
@@ -140,296 +163,6 @@ class Report:
             if len(dollarsSplit) > 1:
                 dollars = '.'.join([dollarsSplit[0], dollarsSplit[1][0:1]])
         return dollars
-
-# TODO: Disable this, if not using HTML reports - BC
-    def updateTemplate(self):
-        self.template = (
-            """
-            <html>
-                <head>
-                    <style>
-                        @page {
-                            size: a4 portrait;
-                            @frame header_frame {
-                                /*Static Frame*/ 
-                                -pdf-frame-content: header_content;
-                                left: 50pt;
-                                width: 512pt;
-                                top: 50pt;
-                                height: 40pt;
-                            }
-                            @frame content_frame {
-                                /*Content Frame*/
-                                left: 20px;
-                                right: 20px;
-                                top: 20px;
-                                bottom: 20px;
-                            }
-                            @frame footer_frame {
-                                /*Another static Frame*/
-                                -pdf-frame-content: footer_content;
-                                left: 50pt;
-                                width: 512pt;
-                                top: 772pt;
-                                height: 20pt;
-                            }
-                        }
-                        .header_border {
-                            font-size: 3px;
-                            width: 512pt;
-                            background-color: #0078a9;
-                            color: #0078a9;
-                            padding-top: 0;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 0;
-                        }
-                        .header {
-                            width: 512pt;
-                            border: 2px solid #abadb0;
-                            margin-top: 5px;
-                            margin-bottom: 5px;
-                            padding-top: 10px;
-                            padding-bottom: 10px;
-                            padding-left: 10px;
-                            padding-right: 10px;
-                        }
-                        .header_table_cell_icon {
-                            border: none;
-                            width: 100px;
-                            padding-top: 5px;
-                            padding-bottom: 5px;
-                            padding-left: 10px;
-                            padding-right: 0;
-                        }
-                        .header_table_cell_icon_img {
-                            width: auto;
-                            height: 60px;
-                        }
-                        .header_table_cell_text {
-                            border: none;
-                            width: 50%;
-                            text-align: left;
-                            margin-left: 20px;
-                            margin-left: 20px;
-                        }
-                        .header_table_cell_logo {
-                            padding-top: 0;
-                            padding-bottom: 0;
-                            padding-left: 35px;
-                            padding-right: 0;
-                            border: none;
-                        }
-                        .header_table_cell_logo_img {
-                            width: auto;
-                            height: 40px;
-                        }
-                        .header_title {
-                            font-size: 16px;
-                            padding-top: 10px;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 0;
-                            margin-top: 10px;
-                            margin-bottom: 0;
-                            margin-left: 0;
-                            margin-right: 0;
-
-                        }
-                        .header_subtitle {
-                            font-size: 12px;
-                            padding-top: 0;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 0;
-                            margin-top: 0;
-                            margin-bottom: 0;
-                            margin-left: 0;
-                            margin-right: 0;
-                        }
-                        .column_left {
-                            margin-top: 0;
-                            padding-top: 5px;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 5px;
-                            height: 690pt;
-                            vertical-align: top;
-                        }
-                        .column_right {
-                            margin-top: 0;
-                            padding-top: 5px;
-                            padding-bottom: 0;
-                            padding-left: 5px;
-                            padding-right: 0;
-                            height: 690pt;
-                            vertical-align: top;
-                        }
-                        .report_columns {
-                            padding-top: 5px;
-                            padding-bottom: 5px;
-                        }
-                        .result_container {
-                            padding-top: 0;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 0;
-                        }
-                        .result_container_spacer {
-                            font-size: 2px;
-                            width: 100%;
-                            background-color: #fff;
-                            color: #fff;
-                            padding-top: 0;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 0;
-                            margin-top: 0;
-                            margin-bottom: 0;
-                            margin-left: 0;
-                            margin-right: 0;
-                        }
-                        .results_table {
-                            height: auto;
-                            width: 100%;
-                            padding-top: 0;
-                            padding-bottom: 0;
-                            padding-left: 0;
-                            padding-right: 0;
-                            margin-top: 0;
-                            margin-bottom: 0;
-                            margin-left: 0;
-                            margin-right: 0;
-                        }
-                        .results_header {
-                            background-color: #0078a9;
-                            color: #000;
-                        }
-                        .results_table_header {
-                            background-color: #0078a9;
-                            margin-bottom: 0;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                        }
-                        .results_table_header_title {
-                            color: #fff;
-                            text-align: left;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                            padding-right: 1px;
-                            padding-left: 5px;
-                            width: 40%;
-                        }
-                        .results_table_header_title_solo {
-                            color: #fff;
-                            text-align: left;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                            padding-left: 5px;
-                            width: 100%;
-                        }
-                        .results_table_header_total {
-                            color: #fff;
-                            text-align: right;
-                            vertical-align: top;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                            padding-right: 1px;
-                            padding-left: 0px;
-                        }
-                        .results_table_header_number {
-                            color: #fff;
-                            text-align: left;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                            padding-right: 1px;
-                            padding-left: 0px;
-                        }
-                        .results_table_cells_header {
-                            background-color: #abadb0;
-                            color: #fff;
-                            border: 1px solid #fff;
-                            margin-top: 0;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                        }
-                        .results_table_cells {
-                            background-color: #f9f9f9;
-                            border: 1px solid #fff;
-                            color: #000;
-                            text-align: left;
-                            padding-top: 3px;
-                            padding-bottom: 1px;
-                            padding-left: 5px;
-                        }
-                        .results_table_img {
-                            width: 512pt;
-                            height: auto;
-                        }
-                        .disclaimer {
-                            color: #c3c3c3;
-                            font-size: 6pt;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div id="content_frame">
-                        <div class="header_border">_</div>
-                        <div class="header">
-                            <table>
-                            <tr>
-                                <td class="header_table_cell_icon">
-                                <img
-                                    class="header_table_cell_icon_img"
-                                    src='"""
-            + self.icon
-            + """'
-                                    alt="hazard"
-                                />
-                                </td>
-                                <td class="header_table_cell_text">
-                                    <h1 class="header_title">"""
-            + self.title
-            + """</h1>
-                                    <p class="header_subtitle">"""
-            + self.subtitle
-            + """</p>
-                                </td>
-                                <td class="header_table_cell_logo">
-                                <img
-                                    class="header_table_cell_logo_img"
-                                    src='"""
-            + self.assets['hazus']
-            + """'
-                                    alt="hazus"
-                                />
-                                </td>
-                            </tr>
-                            </table>
-                        </div>
-                        <div class="header_border">_</div>
-                        <table class="report_columns">
-                            <tr>
-                                <td class="column_left">
-                                """
-            + self.columnLeft
-            + """
-                                </td>
-                                <td class="column_right">
-                                """
-            + self.columnRight
-            + """
-                                </td>
-                            </tr>
-                        </table>
-                        <p class="disclaimer">"""
-            + self.disclaimer
-            + """</p>
-                    </div>
-                </body>
-            </html>
-            """
-        )
 
     def addTable(self, df, title, total, column):
         """Adds a table to the report
@@ -492,40 +225,6 @@ class Report:
         if column == 'right':
             self.columnRight = self.columnRight + template
 
-    # def addImage(self, src, title, column):
-    #     """Adds image block to the report
-
-    #     Keyword Arguments: \n
-    #         src: str -- the path and filename of the image
-    #         title: str -- the title of the image
-    #         column: str -- which column in the report to add to (options: 'left', 'right')
-    #     """
-    #     template = (
-    #         """
-    #         <div class="result_container">
-    #             <table class="results_table">
-    #             <tr class="results_table_header">
-    #                 <th class="results_table_header_title_solo">
-    #                 """
-    #         + title
-    #         + """
-    #                 </th>
-    #             </tr>
-    #             </table>
-    #             <img
-    #             class="results_table_img"
-    #             src='"""
-    #         + src
-    #         + """'
-    #             alt='"""
-    #         + title
-    #         + """'
-    #             />
-    #         </div>
-    #         <div class="result_container_spacer">_</div>
-    #         """
-    #     )
-
     def addMap(
         self,
         gdf,
@@ -538,7 +237,8 @@ class Report:
         scheme=None,
         classification_kwds=None,
         norm=None,
-        boundary=True
+        boundary=True,
+        k=None
     ):
         """Adds a map to the report
 
@@ -557,11 +257,9 @@ class Report:
         """
         try:
             fig = plt.figure(figsize=(10, 10), dpi=300)
-            # Set background color to light grey
-            #fig.patch.set_facecolor('#e1e1e1')
             ax = fig.gca()
             ax2 = fig.gca()
-            crs = 'epsg:4326'
+            crs = 'EPSG:4326'
             # Add hazard boundary to map
             if boundary:
                 boundary = self._Report__getHazardBoundary()
@@ -576,19 +274,15 @@ class Report:
                 # Apply minimal buffer to not cover hazards near study area boundary
                 boundary['geometry'] = boundary.geometry.buffer(.0005)
                 boundary.to_crs('EPSG:3857').plot(ax=ax, facecolor="none", edgecolor="darkgray", linewidth=0.5, alpha=0.7, linestyle='solid')
-            # if not hasattr(gdf, 'crs'):
-            #         #gdf.crs={'init': 'epsg:4326'}
-            #         gdf.crs='epsg:4326'
-            #         gdf.set_crs('epsg:4326')
+            
             if type(gdf) != gpd.GeoDataFrame:
                 gdf['geometry'] = gdf['geometry'].apply(str)
                 gdf['geometry'] = gdf['geometry'].apply(loads)
                 gdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs=crs)
-            
-            gdf.crs='epsg:4326'
+            gdf.crs='EPSG:4326'
 
             try:
-                gdf.to_crs('epsg:3857', inplace=True)
+                gdf.to_crs('EPSG:3857', inplace=True)
                 gdf.plot(
                     column=field,
                     cmap=cmap,
@@ -597,7 +291,8 @@ class Report:
                     edgecolor="darkgrey",
                     scheme=scheme,
                     classification_kwds=classification_kwds,
-                    norm=norm
+                    norm=norm,
+                    alpha=0.9
                 )
             except:
                 gdf['geometry'] = gdf['geometry'].apply(str)
@@ -612,70 +307,42 @@ class Report:
                     classification_kwds=classification_kwds,
                     norm=norm
                 )
-            # add basemap
-            cx.add_basemap(ax, source=cx.providers.Esri.WorldGrayCanvas)
-            if legend == True:
-                sm = plt.cm.ScalarMappable(
-                    cmap=cmap,
-                    norm=plt.Normalize(
-                        vmin=gdf[field].min(), vmax=gdf[field].max()),
+
+            # Add county layer
+            counties = self.getCounties()
+            counties.crs = 'EPSG:4326'
+            counties.to_crs('EPSG:3857').plot(facecolor="none", edgecolor="gray", linewidth=0.15, ax=ax, linestyle='solid', alpha=0.7)
+            # Add county labels
+            labelDF = counties.to_crs('EPSG:3857')
+            gdf.to_crs('EPSG:3857')
+            gdf['dissolve'] = 1
+            mask = gdf.dissolve(by='dissolve').envelope
+            mask = mask.buffer(0)
+            labelDF['geometry'] = labelDF.buffer(0)
+            labelDF = gpd.clip(labelDF, mask)
+            labelDF['centroid'] = [x.centroid for x in labelDF['geometry']]
+            for row in range(len(labelDF)):
+                name = labelDF.iloc[row]['name']
+                coords = labelDF.iloc[row]['centroid']
+                ax.annotate(
+                    text=name,
+                    xy=(float(coords.x), float(coords.y)),
+                    horizontalalignment='center',
+                    size=3,
+                    color='white',
+                    path_effects=[pe.withStroke(
+                        linewidth=1, foreground='#404040')],
                 )
-                sm._A = []
 
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("top", size="10%", pad="20%")
-                cb = fig.colorbar(sm, cax=cax, orientation="horizontal")
-                cb.outline.set_visible(False)
-                if formatTicks == True:
-                    cb.ax.xaxis.set_major_formatter(
-                        ticker.FuncFormatter(
-                            lambda x, p: self.addCommas(
-                                x, abbreviate=True, truncate=True
-                            )
-                        )
-                    )
+            # Add state layer
+            states = self.getStates()
+            states.crs = 'EPSG:4326'
+            states.to_crs('EPSG:3857').plot(
+                facecolor="none", edgecolor="black", linewidth=0.5, ax=ax, linestyle='solid', alpha=0.7
+            )
 
-                counties = self.getCounties()
-                # reduce counties to those that intersect the results
-                intersect = counties.intersects(gdf.geometry)
-                counties = counties[intersect]
-
-                gdf['dissolve'] = 1
-                mask = gdf.dissolve(by='dissolve').envelope
-                mask = mask.buffer(0)
-                counties['geometry'] = counties.buffer(0)
-                counties = gpd.clip(counties, mask)
-                counties.plot(
-                    facecolor="none", edgecolor="darkgrey", linewidth=0.2, ax=ax2
-                )
-                annotationDf = counties.sort_values(
-                    'size', ascending=False)[0:5]
-                annotationDf = annotationDf.sort_values('size', ascending=True)
-
-                annotationDf['centroid'] = [
-                    x.centroid for x in annotationDf['geometry']
-                ]
-                # TODO: Remove mazSize? - BC
-                #maxSize = annotationDf['size'].max()
-                topFontSize = 2.5
-                annotationDf['fontSize'] = topFontSize * (
-                    annotationDf['size'] / annotationDf['size'].max()
-                ) + (
-                    topFontSize
-                    - ((annotationDf['size'] / annotationDf['size'].max()) * 2)
-                )
-                for row in range(len(annotationDf)):
-                    name = annotationDf.iloc[row]['name']
-                    coords = annotationDf.iloc[row]['centroid']
-                    ax.annotate(
-                        s=name,
-                        xy=(float(coords.x), float(coords.y)),
-                        horizontalalignment='center',
-                        size=annotationDf.iloc[row]['fontSize'],
-                        color='white',
-                        path_effects=[pe.withStroke(
-                            linewidth=1, foreground='#404040')],
-                    )
+            # Add basemap
+            cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite, attribution=None, attribution_size=5, alpha=0.7)
 
             fontsize = 3
             for idx in range(len(fig.axes)):
@@ -687,50 +354,17 @@ class Report:
             ylim = ([gdf.total_bounds[1],  gdf.total_bounds[3]])
             ax.set_xlim(xlim)
             ax.set_ylim(ylim)
-            # # else:
-            # TODO: Review this - BC
             #ax.autoscale(enable=True, axis='both', tight=False)
             src = os.getcwd() + '/' + self._tempDirectory + '/' + str(uuid()) + ".png"
-            # TODO: Review pad_inches - BC
             fig.savefig(
                 src,
                 facecolor=fig.get_facecolor(),
-                #pad_inches=0.25,
                 bbox_inches='tight',
                 dpi=600,
             )
             fig.clf()
             plt.clf()
 
-            template = (
-                """
-                <div class="result_container">
-                    <table class="results_table">
-                    <tr class="results_table_header">
-                        <th class="results_table_header_title_solo">
-                        """
-                + title
-                + """
-                        </th>
-                    </tr>
-                    </table>
-                    <img
-                    class="results_table_img"
-                    src='"""
-                + src
-                + """'
-                    alt='"""
-                + title
-                + """'
-                    />
-                </div>
-                <div class="result_container_spacer">_</div>
-                """
-            )
-            if column == 'left':
-                self.columnLeft = self.columnLeft + template
-            if column == 'right':
-                self.columnRight = self.columnRight + template
             # Convert PNG to PDF
             title = 'map-' + title
             if self.hazard == 'flood':
@@ -741,7 +375,7 @@ class Report:
                     y2 = 372
                 if title == 'map-Water Depth (ft) - 100-year':
                     x1 = 319
-                    y1 = 407
+                    y1 = 412
                     x2 = 597
                     y2 = 628
             if self.hazard == 'earthquake':
@@ -749,7 +383,7 @@ class Report:
                     x1 = 319
                     y1 = 114
                     x2 = 597
-                    y2 = 390
+                    y2 = 350
                 if title == 'map-Peak Ground Acceleration (g)':
                     x1 = 315
                     y1 = 425
@@ -783,7 +417,7 @@ class Report:
                     x2 = 594
                     y2 = 640
             try:
-                self.insert_image_to_pdf(src, title, x1, y1, x2, y2)
+                self.insert_image_to_pdf(src, x1, y1, x2, y2)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
                 pass
@@ -821,7 +455,7 @@ class Report:
                     y.append(df[df[xCol] == category][valueColumn].values[0])
                     hue.append(valueColumn)
             dfPlot = pd.DataFrame({'x': x, 'y': y, 'hue': hue})
-            plt.figure(figsize=(5, 3))
+            plt.figure(figsize=(5, 3), dpi=300)
             colorPalette = dict(zip(dfPlot.hue.unique(), colors))
             ax = sns.barplot(x='x', y='y', hue='hue',
                              data=dfPlot, palette=colorPalette)
@@ -830,6 +464,7 @@ class Report:
             plt.legend(title='', fontsize=8)
             plt.xticks(fontsize=8)
             plt.yticks(fontsize=8)
+            tick_locs=ax.yaxis.get_majorticklocs()  
             # TODO: Review fmt (formatting) - BC
             fmt = '{x:,.0f}'
             #tick = ticker.StrMethodFormatter(fmt)
@@ -843,35 +478,6 @@ class Report:
             plt.savefig(src, pad_inches=0, bbox_inches='tight', dpi=600)
             plt.clf()
 
-            template = (
-                """
-                <div class="result_container">
-                    <table class="results_table">
-                    <tr class="results_table_header">
-                        <th class="results_table_header_title_solo">
-                        """
-                + title
-                + """
-                        </th>
-                    </tr>
-                    </table>
-                    <img
-                    class="results_table_img"
-                    src='"""
-                + src
-                + """'
-                    alt='"""
-                + title
-                + """'
-                    />
-                </div>
-                <div class="result_container_spacer">_</div>
-                """
-            )
-            if column == 'left':
-                self.columnLeft = self.columnLeft + template
-            if column == 'right':
-                self.columnRight = self.columnRight + template
             if self.hazard == 'flood':
                 if title == 'Building Damage By Occupancy':
                     x1 = 19
@@ -891,7 +497,7 @@ class Report:
                     y2 = 250
                 if (
                     title == 'Damaged Essential Facilities'
-                ):  # TODO: Add ticks to side of chart - BC
+                ):
                     x1 = 19
                     y1 = 434
                     x2 = 297
@@ -899,21 +505,19 @@ class Report:
             if self.hazard == 'tsunami':
                 if title == 'Building Damage By Occupancy':
                     x1 = 19
-                    #y1 = 116
                     y1 = 112
                     x2 = 297
-                    #y2 = 228
                     y2 = 234
 
             if self.hazard != 'earthquake':
-                self.insert_image_to_pdf(src, title, x1, y1, x2, y2)
+                self.insert_image_to_pdf(src, x1, y1, x2, y2)
 
         except:
             print("Unexpected error:", sys.exc_info()[0])
             plt.clf()
             raise
 
-    def save(self, path, deleteTemp=True, openFile=False, premade=None):
+    def save(self, path, deleteTemp=True, openFile=True, premade=None):
         """Creates a PDF of the report
 
         Keyword Arguments: \n
@@ -959,7 +563,7 @@ class Report:
                 shutil.rmtree(os.getcwd() + '/' + self._tempDirectory)
             raise
 
-    def insert_image_to_pdf(self, src, title, x1, y1, x2, y2):
+    def insert_image_to_pdf(self, src, x1, y1, x2, y2):
         """Insert image (map/histogram) into fillable PDF
 
         Args:
@@ -978,7 +582,7 @@ class Report:
         imageRectangle = fitz.Rect(x1, y1, x2, y2)
         firstPage = template[0]
         firstPage.insertImage(
-            imageRectangle, filename=imageFile, keep_proportion=False)
+            imageRectangle, filename=imageFile)
         template.save(
             template.name,
             deflate=True,
@@ -1081,7 +685,7 @@ class Report:
 
         return writer
 
-    def write_fillable_pdf(self, data_dict, path, openFile=True):
+    def write_fillable_pdf(self, data_dict, path, openFile=False):
         """Insert data into fillable PDF
 
         Args:
@@ -1122,7 +726,7 @@ class Report:
         try:
             # assign constants
             tableRowLimit = 7
-            tonsToTruckLoadsCoef = 0.25
+            tonsToTruckLoadsCoef = 25
             hazard = self.hazard
             if not os.path.isdir(os.getcwd() + '\\' + self._tempDirectory):
                 os.mkdir(os.getcwd() + '/' + self._tempDirectory)
@@ -1138,7 +742,7 @@ class Report:
             if hazard == 'earthquake':
                 eqDataDictionary = {}
                 eqDataDictionary['title'] = self.title
-                eqDataDictionary['date'] = 'Hazus Report Run: {}'.format(
+                eqDataDictionary['date'] = 'Hazus Report Generated: {}'.format(
                     datetime.datetime.now().strftime('%m-%d-%Y').lstrip('0')
                 )
                 # get bulk of results
@@ -1317,6 +921,8 @@ class Report:
                         'econloss_total_': 'EconLoss',
                     }
                     eqDataDictionary['total_econloss'] = '$' + total
+                    # Populate total count
+                    eqDataDictionary['econ_loss_count'] = f"({self.abbreviate(len(economicResults.index)).replace(' ', '')} Tracts with Losses)"
                     self.insert_fillable_pdf(
                         economicLoss, eqDataDictionary, columns)
                     #  'total_econloss': total - Add to table
@@ -1552,6 +1158,8 @@ class Report:
                         column='right',
                         field='EconLoss',
                         cmap=color_ramp,
+                        scheme='NaturalBreaks',
+                        k=4
                     )
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
@@ -1564,7 +1172,7 @@ class Report:
                     gdf = self._Report__getHazardGeoDataFrame()
                     title = 'Peak Ground Acceleration (g)'
                     # limit the extent
-                    gdf = gdf[gdf['PARAMVALUE'] > 0.1]
+                   # gdf = gdf[gdf['PARAMVALUE'] > 0.1]
                     map_colors = [
                         '#ffffff',
                         '#bfccff',
@@ -1576,23 +1184,46 @@ class Report:
                         '#ff0000',
                         '#800000',
                     ]
+
                     color_ramp = LinearSegmentedColormap.from_list(
                         'color_list', [
                             Color(color).rgb for color in map_colors]
                     )
+                    # Are these PGV values? - BC
+                    # TODO: Review if these are PGV or PGA values --> talk with Doug
+                    # TODO: Are there any conversions needed?
+                    # bins = [
+                    #     0.002,
+                    #     0.014,
+                    #     0.039,
+                    #     0.092,
+                    #     0.180,
+                    #     0.340,
+                    #     0.650,
+                    #     1.240,
+                    #     3.000
+                    # ]
+                    # bins = [
+                    #     .0016,
+                    #     .0139,
+                    #     .0389,
+                    #     .0919,
+                    #     .1799,
+                    #     .3399,
+                    #     .6499,
+                    #     1.2399
+                    # ]
                     bins = [
-                        0.002,
-                        0.014,
-                        0.039,
-                        0.092,
-                        0.180,
-                        0.340,
-                        0.650,
-                        1.240,
-                        3.000,
-                        1000,
+                        .0017,
+                        .0140,
+                        .0390,
+                        .0920,
+                        .1800,
+                        .3400,
+                        .6500,
+                        1.24
                     ]
-                    scheme = 'userdefined'
+
                     classification_kwds = {'bins': bins}
                     self.addMap(
                         gdf,
@@ -1601,7 +1232,7 @@ class Report:
                         field='PARAMVALUE',
                         formatTicks=False,
                         cmap=color_ramp,
-                        scheme=scheme,
+                        scheme='UserDefined',
                         classification_kwds=classification_kwds,
                         norm=Normalize(0, len(bins)),
                     )
@@ -1613,17 +1244,18 @@ class Report:
                 ###################################
                 # add debris
                 try:
+                    # TODO: Round truckloads debris
                     # populate and format values
                     bwTons = self.addCommas(
                         results['DebrisBW'].sum(), abbreviate=True)
                     csTons = self.addCommas(
                         results['DebrisCS'].sum(), abbreviate=True)
                     bwTruckLoads = self.addCommas(
-                        results['DebrisBW'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisBW'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     csTruckLoads = self.addCommas(
-                        results['DebrisCS'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisCS'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     # populate totals
@@ -1631,13 +1263,13 @@ class Report:
                         results['DebrisTotal'].sum(), abbreviate=True
                     )
                     totalTruckLoads = self.addCommas(
-                        results['DebrisTotal'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisTotal'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     total = totalTons + ' Tons/' + totalTruckLoads + ' Truck Loads'
                     # build data dictionary
                     data = {
-                        'Debris Type': ['Brick, Wood, and Others', 'Concrete & Steel'],
+                        'Debris Type': ['Brick, Wood, and Other', 'Concrete & Steel'],
                         'Tons': [bwTons, csTons],
                         'Truck Loads': [bwTruckLoads, csTruckLoads],
                     }
@@ -1663,7 +1295,7 @@ class Report:
             if hazard == 'flood':
                 floodDataDictionary = {}
                 floodDataDictionary['title'] = self.title
-                floodDataDictionary['date'] = 'Hazus Report Run: {}'.format(
+                floodDataDictionary['date'] = 'Hazus Report Generated: {}'.format(
                     datetime.datetime.now().strftime('%m-%d-%Y').lstrip('0')
                 )
                 # get bulk of results
@@ -1724,12 +1356,12 @@ class Report:
                         economicResults, counties, how="inner", on=['countyfips']
                     )
                     economicLoss.drop(
-                        ['size', 'countyfips', 'state', 'geometry', 'crs'],
+                        ['size', 'countyfips', 'geometry', 'crs'],
                         axis=1,
                         inplace=True,
                     )
                     economicLoss.columns = [
-                        'TopBlocks', 'EconomicLoss', 'CountyName']
+                        'TopBlocks', 'EconomicLoss', 'CountyName', 'State']
                     # populate total
                     total = self.addCommas(
                         economicLoss['EconomicLoss'].sum(),
@@ -1746,10 +1378,12 @@ class Report:
                         for x in economicLoss['EconomicLoss']
                     ]
                     columns = {
-                        'econloss_county_': 'TopBlocks',
-                        'econloss_state_': 'CountyName',
+                        'econloss_block_': 'TopBlocks',
+                        'econloss_county_': 'CountyName',
+                        'econloss_state_': 'State',
                         'econloss_total_': 'EconomicLoss',
                     }
+                    floodDataDictionary['econ_loss_count'] = f"({self.abbreviate(len(economicResults.index)).replace(' ', '')} Blocks with Losses)"
                     self.insert_fillable_pdf(
                         economicLoss, floodDataDictionary, columns)
                     floodDataDictionary['total_econloss'] = '$' + total
@@ -1792,7 +1426,7 @@ class Report:
                 try:
                     counties = self.getCounties()
                     displacedAndShelterResults = results[
-                        ['block', 'DisplacedHouseholds', 'ShelterNeeds']
+                        ['block', 'DisplacedPopulation', 'ShelterNeeds']
                     ]
                     displacedAndShelterResults[
                         'countyfips'
@@ -1810,12 +1444,12 @@ class Report:
                     )
                     displacedAndShelter.columns = [
                         'TopBlocks',
-                        'DisplacedHouseholds',
+                        'DisplacedPopulation',
                         'PeopleNeedingShelter',
                     ]
                     # populate totals
                     totalDisplaced = self.addCommas(
-                        displacedAndShelter['DisplacedHouseholds'].sum(),
+                        displacedAndShelter['DisplacedPopulation'].sum(),
                         abbreviate=True,
                     )
                     totalShelter = self.addCommas(
@@ -1830,7 +1464,7 @@ class Report:
                     )
                     # limit rows to the highest values
                     displacedAndShelter = displacedAndShelter.sort_values(
-                        'DisplacedHouseholds', ascending=False
+                        'DisplacedPopulation', ascending=False
                     )[0:tableRowLimit]
                     # format values
                     for column in displacedAndShelter:
@@ -1841,7 +1475,7 @@ class Report:
                             ]
                     columns = {
                         'shelter_county_': 'TopBlocks',
-                        'shelter_house_': 'DisplacedHouseholds',
+                        'shelter_house_': 'DisplacedPopulation',
                         'shelter_need_': 'PeopleNeedingShelter',
                     }
                     self.insert_fillable_pdf(
@@ -1912,7 +1546,8 @@ class Report:
                         column='right',
                         field='EconLoss',
                         cmap=color_ramp,
-                        scheme='equalinterval',
+                        scheme='NaturalBreaks',
+                        k=4
                     )
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
@@ -1923,10 +1558,8 @@ class Report:
                 # add hazard map
                 try:
                     gdf = self._Report__getHazardGeoDataFrame()
-                    #title = gdf.title
                     title = 'Water Depth (ft) - 100-year'
                     gdf = gdf[gdf['PARAMVALUE'] > 0.1]
-                    #map_colors = ['#e2edff', '#92c4de', '#3282be', '#083572'] # blues - BC
                     map_colors = ['#00FFFF', '#55AAFF', '#AA55FF', '#FF00FF'] # cool - BC
                     color_ramp = LinearSegmentedColormap.from_list(
                         'color_list', [
@@ -1934,33 +1567,36 @@ class Report:
                     )
                     # convert to GeoDataFrame
                #     breaks = nb(gdf['PARAMVALUE'], nb_class=4)
-                    breaks = self.equal_interval(
-                        gdf['PARAMVALUE'].to_list(), 4)
-                    legend_item1 = breaks[0]
-                    legend_item2 = breaks[1]
-                    legend_item3 = breaks[2]
-                    legend_item4 = breaks[3]
-                    legend_item5 = breaks[4]
-                    floodDataDictionary['wd_legend_1'] = (
-                        self.abbreviate(legend_item1)
-                        + '-'
-                        + self.abbreviate(legend_item2)
-                    )
-                    floodDataDictionary['wd_legend_2'] = (
-                        self.abbreviate(legend_item2)
-                        + '-'
-                        + self.abbreviate(legend_item3)
-                    )
-                    floodDataDictionary['wd_legend_3'] = (
-                        self.abbreviate(legend_item3)
-                        + '-'
-                        + self.abbreviate(legend_item4)
-                    )
-                    floodDataDictionary['wd_legend_4'] = (
-                        self.abbreviate(legend_item4)
-                        + '-'
-                        + self.abbreviate(legend_item5)
-                    )
+                    # breaks = self.equal_interval(
+                    #     gdf['PARAMVALUE'].to_list(), 4)
+                    # legend_item1 = breaks[0]
+                    # legend_item2 = breaks[1]
+                    # legend_item3 = breaks[2]
+                    # legend_item4 = breaks[3]
+                    # legend_item5 = breaks[4]
+                    # floodDataDictionary['wd_legend_1'] = (
+                    #     self.abbreviate(legend_item1)
+                    #     + '-'
+                    #     + self.abbreviate(legend_item2)
+                    # )
+                    # floodDataDictionary['wd_legend_2'] = (
+                    #     self.abbreviate(legend_item2)
+                    #     + '-'
+                    #     + self.abbreviate(legend_item3)
+                    # )
+                    # floodDataDictionary['wd_legend_3'] = (
+                    #     self.abbreviate(legend_item3)
+                    #     + '-'
+                    #     + self.abbreviate(legend_item4)
+                    # )
+                    # floodDataDictionary['wd_legend_4'] = (
+                    #     self.abbreviate(legend_item4)
+                    #     + '-'
+                    #     + self.abbreviate(legend_item5)
+                    # )
+                    gdf = gdf.astype({'PARAMVALUE': 'int'})
+                    floodDataDictionary['wd_legend_min'] = gdf['PARAMVALUE'].min()
+                    floodDataDictionary['wd_legend_max'] = gdf['PARAMVALUE'].max()
                     self.addMap(
                         gdf,
                         title=title,
@@ -1968,7 +1604,6 @@ class Report:
                         field='PARAMVALUE',
                         formatTicks=False,
                         cmap=color_ramp,
-                        scheme='equalinterval'
                     )
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
@@ -1993,7 +1628,7 @@ class Report:
                     #     abbreviate=True,
                     # )
                     truckLoads = self.addCommas(
-                        results['DebrisTotal'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisTotal'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     totalFinish = self.addCommas(
@@ -2001,11 +1636,11 @@ class Report:
                     totalStructure = self.addCommas(
                         results['StructureTonsTotal'].sum(), abbreviate=True)
                     totalFoundation = self.addCommas(
-                        results['FoundationTonsTotal'].sum() * tonsToTruckLoadsCoef,
+                        results['FoundationTonsTotal'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
+
                     # populate totals
-                    
                     totalTons = tons
                     totalTruckLoads = truckLoads
                     total = totalTons + ' Tons/' + totalTruckLoads + ' Truck Loads'
@@ -2022,7 +1657,7 @@ class Report:
                         'Truck Loads': [totalFoundation, totalFinish, totalStructure],
                     }
                     truckLoads = self.addCommas(
-                        results['DebrisTotal'] * tonsToTruckLoadsCoef,
+                        results['DebrisTotal'] / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     # create DataFrame from data dictionary
@@ -2052,7 +1687,7 @@ class Report:
                 # get bulk of results
                 hurDataDictionary = {}
                 hurDataDictionary['title'] = self.title
-                hurDataDictionary['date'] = 'Hazus Report Run: {}'.format(
+                hurDataDictionary['date'] = 'Hazus Report Generated: {}'.format(
                     datetime.datetime.now().strftime('%m-%d-%Y').lstrip('0')
                 )
                 try:
@@ -2139,6 +1774,8 @@ class Report:
                         'econloss_state_': 'State',
                         'econloss_total_': 'EconLoss',
                     }
+                    hurDataDictionary['econ_loss_count'] = f"({self.abbreviate(len(economicResults.index)).replace(' ', '')} Tracts with Losses)"
+                    #hurDataDictionary['econ_loss_count'] = f"({self.abbreviate(len(economicResults.index)).replace(' ', '')} Tracts)"
                     self.insert_fillable_pdf(
                         economicLoss, hurDataDictionary, columns)
                     hurDataDictionary['total_econloss'] = '$' + total
@@ -2318,6 +1955,8 @@ class Report:
                         column='right',
                         field='EconLoss',
                         cmap=color_ramp,
+                        scheme='NaturalBreaks',
+                        k=4
                     )
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
@@ -2330,76 +1969,71 @@ class Report:
                 try:
                     gdf = self._Report__getHazardGeoDataFrame()
                     title = 'Historic Wind Speeds (mph)'
-                    # limit the extent
-                    gdf = gdf[gdf['PARAMVALUE'] > 0.1]
-                  # Natural Breaks
-                   # breaks = nb(gdf['PARAMVALUE'], nb_class=6)
-                  # Equal Interval
-                    breaks = self.equal_interval(
-                        gdf['PARAMVALUE'].to_list(), 6)
-                    legend_item1 = breaks[0]
-                    legend_item2 = breaks[1]
-                    legend_item3 = breaks[2]
-                    legend_item4 = breaks[3]
-                    legend_item5 = breaks[4]
-                    legend_item6 = breaks[5]
-                    legend_item7 = breaks[6]
-                    hurDataDictionary['peak_gust_legend_1'] = (
-                        self.abbreviate(legend_item1)
-                        + '-'
-                        + self.abbreviate(legend_item2)
-                    )
-                    hurDataDictionary['peak_gust_legend_2'] = (
-                        self.abbreviate(legend_item2)
-                        + '-'
-                        + self.abbreviate(legend_item3)
-                    )
-                    hurDataDictionary['peak_gust_legend_3'] = (
-                        self.abbreviate(legend_item3)
-                        + '-'
-                        + self.abbreviate(legend_item4)
-                    )
-                    hurDataDictionary['peak_gust_legend_4'] = (
-                        self.abbreviate(legend_item4)
-                        + '-'
-                        + self.abbreviate(legend_item5)
-                    )
-                    hurDataDictionary['peak_gust_legend_5'] = (
-                        self.abbreviate(legend_item5)
-                        + '-'
-                        + self.abbreviate(legend_item6)
-                    )
-                    hurDataDictionary['peak_gust_legend_6'] = (
-                        self.abbreviate(legend_item6)
-                        + '-'
-                        + self.abbreviate(legend_item7)
-                    )
-                    map_colors = [
-                        '#00faf4',
-                        '#ffffcc',
-                        '#ffe775',
-                        '#ffc140',
-                        '#ff8f20',
-                        '#ff6060',
+                    
+                    # TODO: Verify if we want a static or dynamic legend - BC
+                    max_wind = gdf['PARAMVALUE'].max()
+
+                    map_colors = ['#4575b4', '#91bfdb', '#e0f3f8', '#fee090', '#fc8d59', '#d73027']
+                    bins = [
+                        75,
+                        98,
+                        122,
+                        145,
+                        169
                     ]
+                    if max_wind < 122:
+                        map_colors = map_colors[0:3]
+                        bins = [
+                            75,
+                            98
+                        ]
+                        bins = bins[0:2]
+                    elif max_wind < 145:
+                        map_colors = map_colors[0:4]
+                        bins = bins[0:3]
+
+                #     legend_item1 = 50
+                #     legend_item2 = bins[0]
+                #     legend_item3 = bins[1]
+                #     legend_item4 = bins[2]
+                #     legend_item5 = bins[3]
+                #     legend_item6 = bins[4]
+                #     legend_item7 = "169+"
+
+                #     hurDataDictionary['peak_gust_legend_1'] = (
+                #         self.abbreviate(legend_item1)
+                #         + '-'
+                #         + self.abbreviate(legend_item2)
+                #     )
+                #     hurDataDictionary['peak_gust_legend_2'] = (
+                #         self.abbreviate(legend_item2)
+                #         + '-'
+                #         + self.abbreviate(legend_item3)
+                #     )
+                #     hurDataDictionary['peak_gust_legend_3'] = (
+                #         self.abbreviate(legend_item3)
+                #         + '-'
+                #         + self.abbreviate(legend_item4)
+                #     )
+                #     hurDataDictionary['peak_gust_legend_4'] = (
+                #         self.abbreviate(legend_item4)
+                #         + '-'
+                #         + self.abbreviate(legend_item5)
+                #     )
+                #     hurDataDictionary['peak_gust_legend_5'] = (
+                #         self.abbreviate(legend_item5)
+                #         + '-'
+                #         + self.abbreviate(legend_item6)
+                #     )
+                #     hurDataDictionary['peak_gust_legend_6'] = (
+                #          self.abbreviate(legend_item7)
+                #    )
                     color_ramp = LinearSegmentedColormap.from_list(
                         'color_list', [
                             Color(color).rgb for color in map_colors]
                     )
-                    # scheme = 'userdefined'
-                    # bins = [50, 94, 142, 166, 200, 500]
-                    # classification_kwds = {'bins': bins}
-                    # self.addMap(
-                    #     gdf,
-                    #     title=title,
-                    #     column='right',
-                    #     field='PARAMVALUE',
-                    #     formatTicks=False,
-                    #     cmap=color_ramp,
-                    #     scheme=scheme,
-                    #     classification_kwds=classification_kwds,
-                    #     norm=Normalize(0, len(bins)),
-                    # )
+                    #bins = [round(bin) for bin in breaks]
+                    classification_kwds = {'bins': bins}
                     self.addMap(
                         gdf,
                         title=title,
@@ -2407,8 +2041,17 @@ class Report:
                         field='PARAMVALUE',
                         formatTicks=False,
                         cmap=color_ramp,
+                        scheme='UserDefined',
+                        classification_kwds=classification_kwds
                     )
-                except:
+                except Exception as e:
+                    print('\n')
+                    print(e)
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    print(fname)
+                    print(exc_type, exc_tb.tb_lineno)
+                    print('\n')
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -2428,19 +2071,19 @@ class Report:
                         results['DebrisEligibleTree'].sum(), abbreviate=True
                     )
                     bwTruckLoads = self.addCommas(
-                        results['DebrisBW'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisBW'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     csTruckLoads = self.addCommas(
-                        results['DebrisCS'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisCS'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     treeTruckLoads = self.addCommas(
-                        results['DebrisTree'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisTree'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     eligibleTreeTruckLoads = self.addCommas(
-                        results['DebrisEligibleTree'].sum() *
+                        results['DebrisEligibleTree'].sum() /
                         tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
@@ -2449,14 +2092,14 @@ class Report:
                         results['DebrisTotal'].sum(), abbreviate=True
                     )
                     totalTruckLoads = self.addCommas(
-                        results['DebrisTotal'].sum() * tonsToTruckLoadsCoef,
+                        results['DebrisTotal'].sum() / tonsToTruckLoadsCoef,
                         abbreviate=True,
                     )
                     total = totalTons + ' Tons/' + totalTruckLoads + ' Truck Loads'
                     # build data dictionary
                     data = {
                         'Debris Type': [
-                            'Brick, Wood, and Others',
+                            'Brick, Wood, and Other',
                             'Concrete & Steel',
                             'Tree',
                             'Eligible Tree',
@@ -2495,7 +2138,7 @@ class Report:
             if hazard == 'tsunami':
                 tsDataDictionary = {}
                 tsDataDictionary['title'] = self.title
-                tsDataDictionary['date'] = 'Hazus Report Run: {}'.format(
+                tsDataDictionary['date'] = 'Hazus Report Generated: {}'.format(
                     datetime.datetime.now().strftime('%m-%d-%Y').lstrip('0')
                 )
                 # get bulk of results
@@ -2553,13 +2196,13 @@ class Report:
                         economicResults, counties, how="inner", on=['countyfips']
                     )
                     economicLoss.drop(
-                        ['size', 'name', 'countyfips', 'geometry', 'crs'],
+                        ['size', 'countyfips', 'geometry', 'crs'],
                         axis=1,
                         inplace=True,
                     )
-                    economicLoss.columns = ['Block', 'EconLoss', 'State']
+                    economicLoss.columns = ['Block', 'EconLoss', 'CountyName', 'State']
                     economicLoss = (
-                        economicLoss.groupby(['Block', 'State'])['EconLoss']
+                        economicLoss.groupby(['Block', 'CountyName', 'State'])['EconLoss']
                         .sum()
                         .reset_index()
                     )
@@ -2577,10 +2220,12 @@ class Report:
                         for x in economicLoss['EconLoss']
                     ]
                     columns = {
-                        'econloss_county_': 'Block',
+                        'econloss_block_': 'Block',
+                        'econloss_county_': 'CountyName',
                         'econloss_state_': 'State',
                         'econloss_total_': 'EconLoss',
                     }
+                    tsDataDictionary['econ_loss_count'] = f"({self.abbreviate(len(economicResults.index)).replace(' ', '')} Blocks with Losses)"
                     self.insert_fillable_pdf(
                         economicLoss, tsDataDictionary, columns)
                     tsDataDictionary['total_econloss'] = '$' + str(total)
@@ -2782,7 +2427,8 @@ class Report:
                         column='right',
                         field='EconLoss',
                         cmap=color_ramp,
-                        scheme='equalinterval',
+                        scheme='NaturalBreaks',
+                        k=4
                     )
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
@@ -2796,40 +2442,15 @@ class Report:
                     gdf = self._Report__getHazardGeoDataFrame()
                     title = gdf.title
                     gdf = gdf[gdf['PARAMVALUE'] > 0.1]
+                    gdf = gdf.astype({'PARAMVALUE': 'int'})
                     #map_colors = ['#e2edff', '#92c4de', '#3282be', '#083572']
                     map_colors = ['#00FFFF', '#55AAFF', '#AA55FF', '#FF00FF']
                     color_ramp = LinearSegmentedColormap.from_list(
                         'color_list', [
                             Color(color).rgb for color in map_colors]
                     )
-                    # breaks = nb(gdf['PARAMVALUE'], nb_class=4)
-                    breaks = self.equal_interval(
-                        gdf['PARAMVALUE'].to_list(), 4)
-                    legend_item1 = breaks[0]
-                    legend_item2 = breaks[1]
-                    legend_item3 = breaks[2]
-                    legend_item4 = breaks[3]
-                    legend_item5 = breaks[4]
-                    tsDataDictionary['wd_legend_1'] = (
-                        self.abbreviate(legend_item1)
-                        + ' - '
-                        + self.abbreviate(legend_item2)
-                    )
-                    tsDataDictionary['wd_legend_2'] = (
-                        self.abbreviate(legend_item2)
-                        + ' - '
-                        + self.abbreviate(legend_item3)
-                    )
-                    tsDataDictionary['wd_legend_3'] = (
-                        self.abbreviate(legend_item3)
-                        + ' - '
-                        + self.abbreviate(legend_item4)
-                    )
-                    tsDataDictionary['wd_legend_4'] = (
-                        self.abbreviate(legend_item4)
-                        + ' - '
-                        + self.abbreviate(legend_item5)
-                    )
+                    tsDataDictionary['wd_legend_min'] = gdf['PARAMVALUE'].min()
+                    tsDataDictionary['wd_legend_max'] = gdf['PARAMVALUE'].max()
                     self.addMap(
                         gdf,
                         title='Water Depth (ft)',
@@ -2837,7 +2458,6 @@ class Report:
                         field='PARAMVALUE',
                         formatTicks=False,
                         cmap=color_ramp,
-                        scheme='equalinterval',
                         boundary=False
                     )
                 except:
@@ -2869,8 +2489,6 @@ class Report:
                     )
 
                     breaks = nb(travelTimeToSafety['travelTimeOver65yo'], nb_class=8)
-                    # breaks = self.equal_interval(
-                    #     travelTimeToSafety['travelTimeOver65yo'].to_list(), 7)
                     tt_legend0 = breaks[0]
                     tt_legend1 = breaks[1]
                     tt_legend2 = breaks[2]
@@ -2920,8 +2538,8 @@ class Report:
                         + ' - '
                         + self.abbreviate(tt_legend8)
                     )
-
-                    #classification_kwds = {'bins': bins}
+                    bins = [round(bin) for bin in breaks[1:8]]
+                    classification_kwds = {'bins': bins}
                     self.addMap(
                         travelTimeToSafety,
                         title=title,
@@ -2929,8 +2547,8 @@ class Report:
                         field='travelTimeOver65yo',
                         formatTicks=False,
                         cmap=color_ramp,
-                        scheme='equalinterval'
-                        #classification_kwds=classification_kwds,
+                        scheme='UserDefined',
+                        classification_kwds=classification_kwds,
                         #norm=Normalize(0, len(bins))
                     )
                 except:

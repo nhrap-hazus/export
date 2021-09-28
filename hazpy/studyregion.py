@@ -71,6 +71,7 @@ class StudyRegion:
     def setScenario(self, scenario=None):
         # validate scenario
         scenarios = self.getScenarios()
+        #[print(i) for i in scenarios] #TODO: Remove this - BC
         if scenario == None and len(scenarios) == 1:
             self.scenario = scenarios[0]
         elif scenario == None and len(scenarios) > 1:
@@ -201,7 +202,10 @@ class StudyRegion:
             # constant to convert to real USD
             constant = 1000
             sqlDict = {
-                "earthquake": """select Tract as tract, SUM(ISNULL(TotalLoss, 0)) * {c} as EconLoss from {s}.dbo.[eqTractEconLoss] group by [eqTractEconLoss].Tract""".format(
+                "earthquake": """select Tract as tract, SUM(ISNULL(TotalLoss, 0)) * {c} as EconLoss 
+                from {s}.dbo.[eqTractEconLoss] group by [eqTractEconLoss].Tract
+                HAVING Sum(ISNULL(TotalLoss, 0)) * {c} > 0
+                """.format(
                     s=self.name, c=constant
                 ),
                 "flood": """select CensusBlock as block, 
@@ -223,10 +227,14 @@ class StudyRegion:
                         where Return_Period = '{rp}' 
                         and huScenarioName = '{sc}'
                         group by Tract
+                        HAVING Sum(ISNULL(Total, 0)) * {c} > 0
                 """.format(
                     s=self.name, c=constant, rp=self.returnPeriod, sc=self.scenario
                 ),
-                "tsunami": """select CensusBlock as block, SUM(ISNULL(TotalLoss, 0)) * {c} as EconLoss from {s}.dbo.tsuvResDelKTotB group by CensusBlock""".format(
+                "tsunami": """select CensusBlock as block, SUM(ISNULL(TotalLoss, 0)) * {c} as EconLoss 
+                from {s}.dbo.tsuvResDelKTotB group by CensusBlock
+                HAVING Sum(ISNULL(TotalLoss, 0)) * {c} > 0
+                """.format(
                     s=self.name, c=constant
                 ),
             }
@@ -581,7 +589,8 @@ class StudyRegion:
                 "earthquake": """select Tract as tract, SUM(DisplacedHouseholds) as DisplacedHouseholds from {s}.dbo.eqTract group by Tract""".format(
                     s=self.name
                 ),
-                "flood": """select CensusBlock as block, SUM(DisplacedPop) as DisplacedHouseholds from {s}.dbo.flFRShelter
+                # TODO: Confirm if this is displaced household, and not displaced population (for the summation) - BC
+                "flood": """select CensusBlock as block, SUM(DisplacedPop) as DisplacedPopulation from {s}.dbo.flFRShelter
                     where StudyCaseId = (select StudyCaseID from {s}.[dbo].[flStudyCase] where StudyCaseName = '{sc}')
                     and ReturnPeriodId = '{rp}'
                     group by CensusBlock""".format(
@@ -935,14 +944,14 @@ class StudyRegion:
                         # Historic
                         "Historic Wind Speeds (mph)": {
                             "returnPeriod": "0",
-                            "path": "SELECT Tract as tract, PeakGust * 1.275 as PARAMVALUE FROM {s}.[dbo].[hv_huHistoricWindSpeedT] WHERE PeakGust {o} 0 AND huScenarioName = '{sc}'".format(
+                            "path": "SELECT Tract as tract, PeakGust * 1.275 as PARAMVALUE FROM {s}.[dbo].[hv_huHistoricWindSpeedT] WHERE PeakGust {o} 50 AND huScenarioName = '{sc}'".format(
                                 s=self.name, sc=self.scenario, o=operator
                             ),
                         },
                         # Deterministic
                         "Wind Speeds (mph)": {
                             "returnPeriod": "0",
-                            "path": "SELECT Tract as tract, PeakGust as PARAMVALUE FROM {s}.[dbo].[hv_huDeterminsticWindSpeedResults] WHERE PeakGust {o} 0 AND huScenarioName = '{sc}'".format(
+                            "path": "SELECT Tract as tract, PeakGust as PARAMVALUE FROM {s}.[dbo].[hv_huDeterminsticWindSpeedResults] WHERE PeakGust {o} 50 AND huScenarioName = '{sc}'".format(
                                 s=self.name, sc=self.scenario, o=operator
                             ),
                         },
@@ -1480,7 +1489,6 @@ class StudyRegion:
             gdf: geopandas geodataframe -- a geodataframe of the counties
         """
         try:
-
             sql = """SELECT 
                         CountyFips as "countyfips",
                         CountyName as "name",
@@ -1500,6 +1508,30 @@ class StudyRegion:
         except:
             print("Unexpected error:", sys.exc_info()[0])
             raise
+
+    def getStates(self):
+        """Creates a dataframe of the state name and geometry for all states in the study region
+
+        Returns:
+            gdf: geopandas geodataframe -- a geodataframe of the states
+        """
+        try:
+            sql = """SELECT 
+                        Shape.STAsText() as "geometry",
+                        Shape.STSrid as "crs"
+                        FROM [{s}].[dbo].[hzState]
+                """.format(
+                s=self.name
+            )
+
+            df = self.query(sql)
+            df["geometry"] = df["geometry"].apply(loads)
+            gdf = gpd.GeoDataFrame(df, geometry="geometry")
+            return gdf
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            raise
+
 
     def getTravelTimeToSafety(self):
         """Creates a geodataframe of the travel time to safety
