@@ -25,7 +25,7 @@ from tkinter import (
 from tkinter.ttk import Progressbar
 from hazpy.hazusdb import HazusDB
 from hazpy.studyregion import StudyRegion
-from hazpy.studyregiondataframe import StudyRegionDataFrame
+#from hazpy.studyregiondataframe import StudyRegionDataFrame
 from PIL import Image, ImageTk
 from Python_env.draftemail import draftEmail
 
@@ -229,34 +229,37 @@ class App:
                 try:
                     progressValue = progressValue + progressIncrement
                     self.updateProgressBar(progressValue, 'Writing results to CSV')
-                    try:
-                        results.toCSV(outputPath + '/results.csv')
-                    except:
-                        print('Base results not available to export.')
+                    if results is not None:
+                        try:
+                            results.toCSV(outputPath + '/results.csv')
+                        except:
+                            print('Base results not available to export.')
                     try:
                         progressValue = progressValue + progressIncrement
                         self.updateProgressBar(
                             progressValue, 'Writing building damage by occupancy to CSV'
-                        )
+                            )
                         buildingDamageByOccupancy = (
                             self.studyRegion.getBuildingDamageByOccupancy()
                         )
-                        buildingDamageByOccupancy.toCSV(
-                            outputPath + '/building_damage_by_occupancy.csv'
-                        )
+                        if buildingDamageByOccupancy is not None:
+                            buildingDamageByOccupancy.toCSV(
+                                outputPath + '/building_damage_by_occupancy.csv'
+                            )
                     except:
                         print('Building damage by occupancy not available to export.')
                     try:
                         progressValue = progressValue + progressIncrement
                         self.updateProgressBar(
                             progressValue, 'Writing building damage by type to CSV'
-                        )
+                            )
                         buildingDamageByType = (
                             self.studyRegion.getBuildingDamageByType()
-                        )
-                        buildingDamageByType.toCSV(
-                            outputPath + '/building_damage_by_type.csv'
-                        )
+                            )
+                        if buildingDamageByType is not None:
+                            buildingDamageByType.toCSV(
+                                outputPath + '/building_damage_by_type.csv'
+                            )
                     except:
                         print('Building damage by type not available to export.')
                     try:
@@ -264,8 +267,9 @@ class App:
                         self.updateProgressBar(
                             progressValue, 'Writing damaged facilities to CSV'
                         )
-                        essentialFacilities.toCSV(
-                            outputPath + '/damaged_facilities.csv'
+                        if essentialFacilities is not None:
+                            essentialFacilities.toCSV(
+                                outputPath + '/damaged_facilities.csv'
                         )
                     except Exception as e:
                         print(e)
@@ -284,18 +288,20 @@ class App:
                     self.updateProgressBar(
                         progressValue, 'Writing results to Shapefile'
                     )
-                    try:
-                        results.toShapefile(outputPath + '/results.shp')
-                    except:
-                        print('Base results not available to export.')
+                    if results is not None:
+                        try:
+                            results.toShapefile(outputPath + '/results.shp')
+                        except:
+                            print('Base results not available to export.')
                     try:
                         progressValue = progressValue + progressIncrement
-                        self.updateProgressBar(
-                            progressValue, 'Writing damaged facilities to Shapefile'
-                        )
-                        essentialFacilities.toShapefile(
-                            outputPath + '/damaged_facilities.shp'
-                        )
+                        if essentialFacilities is not None:
+                            self.updateProgressBar(
+                                progressValue, 'Writing damaged facilities to Shapefile'
+                            )
+                            essentialFacilities.toShapefile(
+                                outputPath + '/damaged_facilities.shp'
+                            )
                     except Exception as e:
                         print(e)
                     try:
@@ -305,7 +311,8 @@ class App:
                         )
                         if not 'hazard' in dir():
                             hazard = self.studyRegion.getHazardGeoDataFrame()
-                        hazard.toShapefile(outputPath + '/hazard.shp')
+                        if hazard is not None:
+                            hazard.toShapefile(outputPath + '/hazard.shp')
                     except:
                         print('Hazard not available to export.')
                 except:
@@ -323,18 +330,20 @@ class App:
                     progressValue = progressValue + progressIncrement
                     msg = 'Writing results to GeoJSON'
                     self.updateProgressBar(progressValue, msg)
-                    try:
-                        results.toGeoJSON(outputPath + '/results.geojson')
-                    except:
-                        print('Base results not available to export.')
+                    if results is not None:
+                        try:
+                            results.toGeoJSON(outputPath + '/results.geojson')
+                        except:
+                            print('Base results not available to export.')
                     try:
                         progressValue = progressValue + progressIncrement
                         self.updateProgressBar(
                             progressValue, 'Writing damaged facilities to GeoJSON'
                         )
-                        essentialFacilities.toGeoJSON(
-                            outputPath + '/damaged_facilities.geojson'
-                        )
+                        if essentialFacilities is not None:
+                            essentialFacilities.toGeoJSON(
+                                outputPath + '/damaged_facilities.geojson'
+                            )
                     except Exception as e:
                         print(e)
                     try:
@@ -344,7 +353,8 @@ class App:
                         )
                         if not 'hazard' in dir():
                             hazard = self.studyRegion.getHazardGeoDataFrame()
-                        hazard.toGeoJSON(outputPath + '/hazard.geojson')
+                        if hazard is not None:
+                            hazard.toGeoJSON(outputPath + '/hazard.geojson')
                     except:
                         print('Hazard not available to export.')
                 except:
@@ -414,7 +424,7 @@ class App:
             if self.dropdown_studyRegion.winfo_ismapped():
                 value = self.dropdown_studyRegion.get()
                 if len(value) > 0:
-                    self.studyRegion = StudyRegion(str(value))
+                    self.studyRegion = StudyRegion(studyRegion=str(value))
                 else:
                     self.selection_errors.append('Study Region')
                     validated = False
@@ -424,12 +434,20 @@ class App:
                 'dropdown_scenario' in dir(self)
                 and self.dropdown_scenario.winfo_ismapped()
             ):
-                value = self.dropdown_scenario.get()
-                if len(value) > 0:
-                    self.studyRegion.setScenario(value)
+                if self.value_scenario.get() is None:
+                    value = self.dropdown_scenario.get()
+                    if len(value) > 0:
+                        self.studyRegion.setScenario(value)
+                    # elif self.value_scenario.get() is not None:
+                    #     value = self.value_scenario.get()
+                    else:
+                        self.selection_errors.append('Scenario')
+                        validated = False
                 else:
-                    self.selection_errors.append('Scenario')
-                    validated = False
+                    self.studyRegion.scenario = self.value_scenario.get()
+            else:
+                self.studyRegion.scenario = self.options_scenario[0]
+
 
             # validates that a hazard is selected or auto-assigned
             if 'dropdown_hazard' in dir(self) and self.dropdown_hazard.winfo_ismapped():
@@ -442,16 +460,16 @@ class App:
                     validated = False
 
             # validates that a return period is selected or auto-assigned
-            if (
-                'dropdown_returnPeriod' in dir(self)
-                and self.dropdown_returnPeriod.winfo_ismapped()
-            ):
-                value = self.dropdown_returnPeriod.get()
-                if len(value) > 0:
-                    self.studyRegion.setReturnPeriod(value)
-                else:
-                    self.selection_errors.append('Return Period')
-                    validated = False
+            if type(self.options_returnPeriod) is list:
+               # if self.studyRegion.returnPeriod is None:
+                if (
+                    'dropdown_returnPeriod' in dir(self)
+                    and self.dropdown_returnPeriod.winfo_ismapped()
+                ):
+                    value = self.dropdown_returnPeriod.get()
+                    self.studyRegion.returnPeriod = value
+            else:
+                self.studyRegion.returnPeriod = self.options_returnPeriod
 
             # validate export checkboxes
             self.exportOptions = {}
@@ -746,11 +764,17 @@ class App:
             # if a study region is selected
             if value != '':
                 # init StudyRegion class
-                self.studyRegion = StudyRegion(str(value))
+                self.studyRegion = StudyRegion(studyRegion=str(value))
                 # get lists of hazards, scenarios, and return periods
                 self.options_hazard = self.studyRegion.getHazardsAnalyzed()
                 self.options_scenario = self.studyRegion.getScenarios()
-                self.options_returnPeriod = self.studyRegion.getReturnPeriods()
+                if len(self.options_scenario) > 1:
+                    self.options_returnPeriod = self.studyRegion.getReturnPeriods()
+                else:
+                    self.studyRegion.setScenario(scenario=''.join(self.options_scenario))
+                    #self.studyRegion.setScenario()
+                    self.studyRegion.scenario = str(''.join(self.options_scenario))
+                    self.options_returnPeriod = self.studyRegion.getReturnPeriods(scenario=self.studyRegion.scenario)
 
                 # try to remove previous widgets if they exist
                 try:
@@ -769,9 +793,9 @@ class App:
                 # add widgets if multiple options exist
                 if len(self.options_hazard) > 1:
                     self.addWidget_hazard(self.row_hazard)
-                if len(self.options_scenario) > 1:
+                if  len(self.options_scenario) > 1:
                     self.addWidget_scenario(self.row_scenario)
-                if len(self.options_returnPeriod) > 1:
+                if self.options_returnPeriod is not None and isinstance(self.options_returnPeriod, list):
                     self.addWidget_returnPeriod(self.row_returnPeriod)
 
                 # update the output directory
@@ -808,6 +832,8 @@ class App:
             # add scenario widget if more than one option exists
             if len(self.options_scenario) > 1:
                 self.addWidget_scenario()
+            else:
+                self.options_scenario = self.studyRegion.getScenarios()
 
     def handle_scenario(self, name, index, operation):
         """handles the selection of a scenario from the scenario widget"""
@@ -816,18 +842,22 @@ class App:
         if value != '':
             # update study region class with value
             self.studyRegion.setScenario(value)
-            print('Scenario set as ' + str(value))
-
+            print(f'Scenario set as: {value}')
+            self.studyRegion.report.hazard = value
             # get new return period list
-            self.options_returnPeriod = self.studyRegion.getReturnPeriods()
-            # remove previous return period widget if exists
+            self.options_returnPeriod = self.studyRegion.getReturnPeriods(scenario=(str(value)))
             try:
                 self.removeWidget_returnPeriod()
             except:
                 pass
             # add return period widget if more than one option exists
             if len(self.options_returnPeriod) > 1:
-                self.addWidget_returnPeriod()
+                self.options_returnPeriod = self.studyRegion.getReturnPeriods(scenario=(str(value)))
+                print(f'Return Period set as: {self.options_returnPeriod}')
+        else:
+            value = ''.join(self.options_scenario)
+            self.studyRegion.setScenario(value)
+            self.studyRegion.scenario = value
 
     def handle_returnPeriod(self, name, index, operation):
         """handles the selection of a return period from the return period widget"""
@@ -835,8 +865,8 @@ class App:
         # if value exists
         if value != '':
             # update study region class with value
-            self.studyRegion.setReturnPeriod(value)
             print('Return Period set as ' + str(value))
+            self.studyRegion.returnPeriod = str(value)
 
     def build_gui(self):
         """builds the GUI"""
@@ -1087,7 +1117,7 @@ class App:
                 0,
                 "Unable to build the app: "
                 + str(sys.exc_info()[0])
-                + " | If this problem persists, contact hazus-support@riskmapcds.com.",
+                + " | If this problem persists, contact fema-hazus-support@fema.dhs.gov.",
                 "HazPy",
                 0x1000,
             )

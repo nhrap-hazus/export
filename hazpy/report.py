@@ -328,7 +328,7 @@ class Report:
                     text=name,
                     xy=(float(coords.x), float(coords.y)),
                     horizontalalignment='center',
-                    size=3,
+                    size=6,
                     color='white',
                     path_effects=[pe.withStroke(
                         linewidth=1, foreground='#404040')],
@@ -341,9 +341,6 @@ class Report:
                 facecolor="none", edgecolor="black", linewidth=0.5, ax=ax, linestyle='solid', alpha=0.7
             )
 
-            # Add basemap
-            cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite, attribution=None, attribution_size=5, alpha=0.7)
-
             fontsize = 3
             for idx in range(len(fig.axes)):
                 fig.axes[idx].tick_params(labelsize=fontsize, size=fontsize)
@@ -354,6 +351,8 @@ class Report:
             ylim = ([gdf.total_bounds[1],  gdf.total_bounds[3]])
             ax.set_xlim(xlim)
             ax.set_ylim(ylim)
+            # Add basemap
+            cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite, attribution=None, attribution_size=5, alpha=0.7)
             #ax.autoscale(enable=True, axis='both', tight=False)
             src = os.getcwd() + '/' + self._tempDirectory + '/' + str(uuid()) + ".png"
             fig.savefig(
@@ -361,6 +360,7 @@ class Report:
                 facecolor=fig.get_facecolor(),
                 bbox_inches='tight',
                 dpi=600,
+                pad_inches=0
             )
             fig.clf()
             plt.clf()

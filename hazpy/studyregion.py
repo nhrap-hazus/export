@@ -1,18 +1,15 @@
+import json
 import os
 import pandas as pd
 import geopandas as gpd
 import pyodbc as py
 from shapely.wkt import loads
-#from shapely.geometry.multipolygon import MultiPolygon
-#from shapely.geometry.polygon import Polygon
-#import urllib
 
 # TODO check if all geojsons are oriented correctly; if not, apply orient
 # try:
 #     from shapely.ops import orient  # version >=1.7a2
 # except:
 #     from shapely.geometry.polygon import orient
-#from sqlalchemy import create_engine
 import sys
 from functools import reduce
 
@@ -32,13 +29,17 @@ class StudyRegion:
         hazard: str -- the name of the peril. Only necessary if the study region has more than one hazard.
     """
 
+    scenario = ''
+
     def __init__(self, studyRegion):
         self.name = studyRegion
         self.conn = self.createConnection()
-        # set hazard, scenario, and return period
-        # NOTE: all flood and hurricane queries need to include a where clause equal to self.scenario and self.returnPeriod
+        self.returnPeriod = ''
+        self.conn = self.createConnection()
+        self.name = studyRegion
+        self.hazard = ''
+        self.dbName = studyRegion
         self.setHazard()
-       # self.setHazard(hazard='tsunami')
         self.report = Report(self, self.name, "", self.hazard)
 
     def setHazard(self, hazard=None):
@@ -47,74 +48,44 @@ class StudyRegion:
         if hazard == None and len(hazards) == 1:
             self.hazard = hazards[0]
         elif hazard == None and len(hazards) > 1:
-            # Defaults to first hazard (earthquake) - BC
             self.hazard = hazards[0]
-            # TODO: Review if this is needed - or refactor to a popup message - BC
-            # print(
-            #     str(hazards)
-            #     + " hazard options available. Defaulting to "
-            #     + hazards[0]
-            #     + '. To change the hazard, use: StudyRegion.setHazard("YOUR_HAZARD_HERE")'
-            # )
         else:
             if hazard in hazards:
                 self.hazard = hazard
-            else:
-                raise Exception(
-                    "Method setHazard failed: Unable to set the hazard.",
-                    "Reinitialize the StudyRegion class and specify the hazard as one of the following: "
-                    + str(hazards),
-                )
-        self.setScenario()
-        self.setReturnPeriod()
 
     def setScenario(self, scenario=None):
         # validate scenario
         scenarios = self.getScenarios()
-        #[print(i) for i in scenarios] #TODO: Remove this - BC
-        if scenario == None and len(scenarios) == 1:
+        if scenario == None or len(scenarios) == 1:
             self.scenario = scenarios[0]
         elif scenario == None and len(scenarios) > 1:
             self.scenario = scenarios[0]
             print(
-                str(scenarios)
-                + " scenario options available. Defaulting to "
-                + scenarios[0]
-                + '. To change the scenario, use: StudyRegion.setHazard("YOUR_SCENARIO_HERE")'
+                f"Defaulting to {scenarios[0]}"
             )
         else:
             if scenario in scenarios:
                 self.scenario = scenario
-            else:
-                raise Exception(
-                    "Method setScenario failed: Unable to set the scenario.",
-                    "Reinitialize the StudyRegion class and specify the scenario as one of the following: "
-                    + str(scenarios),
-                )
 
-    def setReturnPeriod(self, returnPeriod=None):
-        # validate return period
-        returnPeriods = self.getReturnPeriods()
+    def getConnectionString(self, stringName):
+        """ Looks up a connection string in a json file based on an input argument
 
-        if returnPeriod == None and len(returnPeriods) == 1:
-            self.returnPeriod = returnPeriods[0]
-        elif returnPeriod == None and len(returnPeriods) > 1:
-            self.returnPeriod = returnPeriods[0]
-            print(
-                str(returnPeriods)
-                + " returnPeriod options available. Defaulting to "
-                + returnPeriods[0]
-                + '. To change the returnPeriod, use: StudyRegion.setReturnPeriod("YOUR_RETURN_PERIOD_HERE")'
-            )
-        else:
-            if returnPeriod in returnPeriods:
-                self.returnPeriod = returnPeriod
-            else:
-                raise Exception(
-                    "Method setReturnPeriod failed: Unable to set the returnPeriod.",
-                    "Reinitialize the StudyRegion class and specify the return period as one of the following: "
-                    + str(returnPeriods),
-                )
+            Keyword Arguments:
+                stringName: str -- the name of the connection string in the json file
+                
+            Returns:
+                conn: pyodbc connection string that needs driver and computername updated
+
+            Notes:
+                Can we use relative path to this file for ./connectionStrings.json or
+                is it relative to file that imported this file?
+                os.path.join(Path(__file__).parent, "connectionStrings.json")
+                "./connectionStrings.json"
+        """
+        with open("./src/connectionStrings.json") as f:
+            connectionStrings = json.load(f)
+            connectionString = connectionStrings[stringName]
+        return connectionString
 
     def createConnection(self, orm="pyodbc"):
         """Creates a connection object to the local Hazus SQL Server database
@@ -136,27 +107,21 @@ class StudyRegion:
                 "{SQL Native Client}",
                 "{SQL Server}",
             ]
-            computer_name = os.environ["COMPUTERNAME"]
-            if orm == "pyodbc":
+            computer_name = os.environ['COMPUTERNAME']
+            if orm == 'pyodbc':
                 # create connection with the latest driver
                 for driver in drivers:
                     try:
-                        conn = py.connect(
-                            r"Driver={d};SERVER={cn}\HAZUSPLUSSRVR; UID=SA;PWD=Gohazusplus_02".format(
-                                d=driver, cn=computer_name
-                            )
-                        )
+                        conn = py.connect(self.getConnectionString('pyodbc').format(d=driver, cn=computer_name))
                         break
                     except:
-                        continue
-            # TODO add sqlalchemy connection
-            # if orm == 'sqlalchemy':
-            #     conn = create_engine('mssql+pyodbc://SA:Gohazusplus_02@HAZUSPLUSSRVR')
-            # self.conn = conn
+                        conn = py.connect(self.getConnectionString('pyodbc_auth').format(d=driver, cn=computer_name))
+                        break
             return conn
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error creating the database connection:", sys.exc_info()[0])
             raise
+
 
     def query(self, sql):
         """Performs a SQL query on the Hazus SQL Server database
@@ -168,10 +133,12 @@ class StudyRegion:
             df: pandas dataframe
         """
         try:
+            self.conn = self.createConnection()
             df = pd.read_sql(sql, self.conn)
             return StudyRegionDataFrame(self, df)
+
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error with study region query:", sys.exc_info()[0])
             raise
 
     def getHazardBoundary(self):
@@ -188,7 +155,7 @@ class StudyRegion:
             df = self.query(sql)
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting hazard boundary:", sys.exc_info()[0])
             raise
 
     def getEconomicLoss(self):
@@ -209,11 +176,11 @@ class StudyRegion:
                     s=self.name, c=constant
                 ),
                 "flood": """select CensusBlock as block, 
-                Sum(ISNULL(TotalLoss, 0)) * {c} as EconLoss from {s}.dbo.flFRGBSEcLossByTotal
+                Sum(ISNULL(CAST(TotalLoss AS BIGINT), 0)) * {c} as EconLoss from {s}.dbo.flFRGBSEcLossByTotal
                     where StudyCaseId = (select StudyCaseID from {s}.[dbo].[flStudyCase] where StudyCaseName = '{sc}')
                     and ReturnPeriodId = '{rp}'
                  group by CensusBlock
-                 HAVING Sum(ISNULL(TotalLoss, 0)) * {c} > 0
+                 HAVING Sum(ISNULL(CAST(TotalLoss AS BIGINT), 0)) * {c} > 0
                  """.format(
                     s=self.name, c=constant, sc=self.scenario, rp=self.returnPeriod
                 ),
@@ -242,7 +209,7 @@ class StudyRegion:
             df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting economic loss:", sys.exc_info()[0])
             raise
 
     def getTotalEconomicLoss(self):
@@ -268,10 +235,10 @@ class StudyRegion:
                     s=self.name
                 ),
                 "flood": """SELECT CensusBlock as block, 
-                SUM(ISNULL(TotalLoss, 0)) * {c}
+                        SUM(ISNULL(CAST(TotalLoss AS BIGINT), 0)) * {c}
                         AS TotalLoss, 
-                        SUM(ISNULL(BuildingLoss, 0)) * {c} AS BldgLoss,
-                        SUM(ISNULL(ContentsLoss, 0)) * {c} AS ContLoss
+                        SUM(ISNULL(CAST(BuildingLoss AS BIGINT), 0)) * {c} AS BldgLoss,
+                        SUM(ISNULL(CAST(ContentsLoss AS BIGINT), 0)) * {c} AS ContLoss
                         FROM [{s}].dbo.[flFRGBSEcLossBySOccup] 
                         where StudyCaseId = (select StudyCaseID from {s}.[dbo].[flStudyCase] where StudyCaseName = '{sc}')
                         and ReturnPeriodId = '{rp}'
@@ -326,10 +293,10 @@ class StudyRegion:
                     s=self.name
                 ),
                 "flood": """SELECT SOccup AS Occupancy, 
-                SUM(ISNULL(TotalLoss, 0)) * {c}
+                        SUM(ISNULL(CAST(TotalLoss AS BIGINT), 0)) * {c}
                         AS TotalLoss, 
-                        SUM(ISNULL(BuildingLoss, 0)) * {c} AS BldgLoss,
-                        SUM(ISNULL(ContentsLoss, 0)) * {c} AS ContLoss
+                        SUM(ISNULL(CAST(BuildingLoss AS BIGINT), 0)) * {c} AS BldgLoss,
+                        SUM(ISNULL(CAST(ContentsLoss AS BIGINT), 0)) * {c} AS ContLoss
                         FROM {s}.dbo.[flFRGBSEcLossBySOccup]
                         where StudyCaseId = (select StudyCaseID from {s}.[dbo].[flStudyCase] where StudyCaseName = '{sc}')
                         and ReturnPeriodId = '{rp}'
@@ -383,7 +350,7 @@ class StudyRegion:
             df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting damage by occupancy:", sys.exc_info()[0])
             raise
 
     def getBuildingDamageByType(self):
@@ -457,7 +424,7 @@ class StudyRegion:
             df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error: getting building damage by type", sys.exc_info()[0])
             raise
 
     def getInjuries(self):
@@ -518,7 +485,7 @@ class StudyRegion:
                 df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting injuries:", sys.exc_info()[0])
             raise
 
     def getFatalities(self):
@@ -572,7 +539,7 @@ class StudyRegion:
                 df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting fatalities:", sys.exc_info()[0])
             raise
 
     def getDisplacedHouseholds(self):
@@ -611,7 +578,7 @@ class StudyRegion:
                 df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting displaced households:", sys.exc_info()[0])
             raise
 
     def getShelterNeeds(self):
@@ -648,7 +615,7 @@ class StudyRegion:
                 df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting shelter needs:", sys.exc_info()[0])
             raise
 
     def getDebris(self):
@@ -694,7 +661,7 @@ class StudyRegion:
             df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting debris:", sys.exc_info()[0])
             raise
 
     def getHazardsAnalyzed(self, returnType="list"):
@@ -760,148 +727,53 @@ class StudyRegion:
                 hazardDict["Peak Ground Acceleration (g)"] = gdf
             if hazard == "flood":
                 # this is a list instead of a dictionary, because some of the 'name' properties are the same
-                hazardPathDicts = [
-                    # Deterministic Riverine
-                    {
-                        "name": "Water Depth (ft)",
-                        "returnPeriod": "0",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/mix0/w001001.adf",
-                    },
-                    # Deterministic Coastal
-                    {
-                        "name": "Water Depth (ft)",
-                        "returnPeriod": "0",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/mix0/w001001.adf",
-                    },
-                    # Probabilistic Riverine 5-year
-                    {
-                        "name": "Water Depth (ft) - 5-year",
-                        "returnPeriod": "5",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/rpd5/w001001.adf",
-                    },
-                    #  Probabilistic Riverine 10-year
-                    {
-                        "name": "Water Depth (ft) - 10-year",
-                        "returnPeriod": "10",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/rpd10/w001001.adf",
-                    },
-                    #  Probabilistic Riverine 25-year
-                    {
-                        "name": "Water Depth (ft) - 25-year",
-                        "returnPeriod": "25",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/rpd25/w001001.adf",
-                    },
-                    #  Probabilistic Riverine 50-year
-                    {
-                        "name": "Water Depth (ft) - 50-year",
-                        "returnPeriod": "50",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/rpd50/w001001.adf",
-                    },
-                    #  Probabilistic Riverine 100-year
-                    {
-                        "name": "Water Depth (ft) - 100-year",
-                        "returnPeriod": "100",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/rpd100/w001001.adf",
-                    },
-                    #  Probabilistic Riverine 500-year
-                    {
-                        "name": "Water Depth (ft) - 500-year",
-                        "returnPeriod": "500",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Riverine/Depth/rpd500/w001001.adf",
-                    },
-                    #  Probabilistic Coastal 5-year
-                    {
-                        "name": "Water Depth (ft) - 5-year",
-                        "returnPeriod": "5",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/rpd5/w001001.adf",
-                    },
-                    #  Probabilistic Coastal 10-year
-                    {
-                        "name": "Water Depth (ft) - 10-year",
-                        "returnPeriod": "10",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/rpd10/w001001.adf",
-                    },
-                    #  Probabilistic Coastal 25-year
-                    {
-                        "name": "Water Depth (ft) - 25-year",
-                        "returnPeriod": "25",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/rpd25/w001001.adf",
-                    },
-                    #  Probabilistic Coastal 50-year
-                    {
-                        "name": "Water Depth (ft) - 50-year",
-                        "returnPeriod": "50",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/rpd50/w001001.adf",
-                    },
-                    #  Probabilistic Coastal 100-year
-                    {
-                        "name": "Water Depth (ft) - 100-year",
-                        "returnPeriod": "100",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/rpd100/w001001.adf",
-                    },
-                    #  Probabilistic Coastal 500-year
-                    {
-                        "name": "Water Depth (ft) - 500-year",
-                        "returnPeriod": "500",
-                        "path": "C:/HazusData/Regions/"
-                        + self.name
-                        + "/"
-                        + self.scenario
-                        + "/Coastal/Depth/rpd500/w001001.adf",
-                    },
-                ]
+                # TODO: Create a loop for this in order to get all scenarios - BC
+                returnPeriodNumber = str(''.join(filter(str.isdigit, self.returnPeriod)))
+                if returnPeriodNumber == 0:
+                    hazardPathDicts = [
+                        # Deterministic Riverine
+                        {
+                            "name": "Water Depth (ft)",
+                            "returnPeriod": "0",
+                            "path": "C:/HazusData/Regions/"
+                            + self.name
+                            + "/"
+                            + self.scenario
+                            + "/Riverine/Depth/mix0/w001001.adf",
+                        },
+                        # Deterministic Coastal
+                        {
+                            "name": "Water Depth (ft)",
+                            "returnPeriod": "0",
+                            "path": "C:/HazusData/Regions/"
+                            + self.name
+                            + "/"
+                            + self.scenario
+                            + "/Coastal/Depth/mix0/w001001.adf",
+                        }
+                    ]
+                else:
+                    hazardPathDicts = [
+                    # Probabilistic Riverine 5-year # TODO - Change this comment - BC
+                        {
+                            "name": f"Water Depth (ft) - {returnPeriodNumber}-year",
+                            "returnPeriod": f"{returnPeriodNumber}",
+                            "path": "C:/HazusData/Regions/"
+                            + self.name
+                            + "/"
+                            + self.scenario
+                            + ("/Riverine/Depth/rpd" + f"{returnPeriodNumber}/w001001.adf"),
+                        },
+                        {
+                            "name": f"Water Depth (ft) - {returnPeriodNumber}-year",
+                            "returnPeriod": f"{returnPeriodNumber}",
+                            "path": "C:/HazusData/Regions/"
+                            + self.name
+                            + "/"
+                            + self.scenario
+                            + ("/Coastal/Depth/rpd" + f"{returnPeriodNumber}/w001001.adf"),
+                        }
+                    ]
                 for idx in range(len(hazardPathDicts)):
                     if (
                         hazardPathDicts[idx]["returnPeriod"] == self.returnPeriod
@@ -936,7 +808,6 @@ class StudyRegion:
                             gdf.geometry = gdf.geometry.to_crs(epsg=4326)
                             hazardDict[hazardPathDicts[idx]["name"]] = gdf
                         except:
-                            print("Unexpected error:", sys.exc_info()[0])
                             pass
             if hazard == "hurricane":
                 try:
@@ -1066,7 +937,7 @@ class StudyRegion:
             sdf.title = keys[0]
             return sdf
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting hazard geodataframe:", sys.exc_info()[0])
             pass
 
     def getScenarios(self):
@@ -1079,39 +950,28 @@ class StudyRegion:
 
         try:
             if self.hazard == "earthquake":
-                sql = """SELECT [eqScenarioname] as scenarios
-                            FROM [syHazus].[dbo].[eqScenario]
-                            WHERE eqScenarioID = 
-                                (SELECT [eqScenarioId]
-                                    FROM [syHazus].[dbo].[eqRegionScenario]
-                                    WHERE RegionID = (SELECT RegionID FROM [syHazus].[dbo].[syStudyRegion]
-                                        WHERE RegionName = '{s}'))""".format(
-                    s=self.name
-                )
+                sql = f"SELECT [eqScenarioname] as scenarios FROM [{self.dbName}].[dbo].[RgnExpeqScenario]"
+            
+            # flood can have many scenarios
+            if self.hazard == "flood":
+                sql = f"SELECT [StudyCaseName] as scenarios FROM [{self.dbName}].[dbo].[flStudyCase]"
+            
             # NOTE: huTemplateScenario can contain problematic suffixes if syHazus contains duplicate named scenarios; defaulting to distinct query
-            if (
-                self.hazard == "hurricane"
-            ):  # hurricane can only have one active scenario
-                sql = """SELECT DISTINCT [CurrentScenario] as scenarios FROM {s}.[dbo].[huTemplateScenario]""".format(
-                    s=self.name)
-                # sql = """select distinct(huScenarioName) as scenarios from {s}.dbo.[huSummaryLoss]""".format(
-                #     s=self.name)
-            if self.hazard == "flood":  # flood can have many scenarios
-                sql = """SELECT [StudyCaseName] as scenarios FROM {s}.[dbo].[flStudyCase]""".format(
-                    s=self.name
-                )
-            if self.hazard == "tsunami":  # tsunami can have many scenarios
-                sql = """SELECT [ScenarioName] as scenarios FROM {s}.[dbo].[tsScenario]""".format(
-                    s=self.name
-                )
+            # hurricane can only have one active scenario
+            if self.hazard == "hurricane":
+                sql = f"SELECT distinct(huScenarioName) as scenarios FROM [{self.dbName}].dbo.[huSummaryLoss]"
+
+            # tsunami can have many scenarios
+            if self.hazard == "tsunami":
+                sql = f"SELECT [ScenarioName] as scenarios FROM [{self.dbName}].[dbo].[tsScenario]"
             queryset = self.query(sql)
             scenarios = list(queryset["scenarios"])
             return scenarios
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting scenarios:", sys.exc_info()[0])
             raise
 
-    def getReturnPeriods(self):
+    def getReturnPeriods(self, hazard='', scenario=''):
         """Gets the return periods for a scenario
 
         Returns:
@@ -1119,55 +979,29 @@ class StudyRegion:
 
         """
         try:
-            if self.hazard == "earthquake":
-                sql = """SELECT [ReturnPeriod] as returnPeriod
-                            FROM [syHazus].[dbo].[eqScenario]
-                            WHERE eqScenarioID = 
-                                (SELECT [eqScenarioId]
-                                    FROM [syHazus].[dbo].[eqRegionScenario]
-                                    WHERE RegionID = (SELECT RegionID FROM [syHazus].[dbo].[syStudyRegion]
-                                        WHERE RegionName = '{s}'))""".format(
-                    s=self.name
-                )
-            if self.hazard == "hurricane":
-                sql = """SELECT DISTINCT [Return_Period] as returnPeriod FROM {s}.[dbo].[hv_huQsrEconLoss]""".format(
-                    s=self.name
-                )
-            if self.hazard == "flood":  # TODO test if this works for UDF
-                sql = """SELECT DISTINCT [ReturnPeriodID] as returnPeriod FROM {s}.[dbo].[flFRGBSEcLossByTotal]""".format(
-                    s=self.name
-                )
-            if (
-                self.hazard == "tsunami"
-            ):  # selecting 0 due to no return period existing in database
-                sql = (
-                    """SELECT '0' as returnPeriod FROM {s}.[dbo].[tsScenario]""".format(
-                        s=self.name
-                    )
-                )
+            if self.hazard == 'earthquake':
+                sql = f"SELECT [ReturnPeriod] as returnPeriod FROM [{self.dbName}].[dbo].[RgnExpeqScenario]"
+            if self.hazard == 'hurricane':
+                sql = f"SELECT DISTINCT [Return_Period] as returnPeriod FROM [{self.dbName}].[dbo].[hv_huQsrEconLoss] WHERE huScenarioName = '{scenario}'"
+            if self.hazard == 'flood':  # TODO test if this works for UDF
+                sql = f"""SELECT DISTINCT [ReturnPeriodID] as returnPeriod FROM [{self.dbName}].[dbo].[flFRGBSEcLossByTotal]
+                        WHERE StudyCaseId = (SELECT StudyCaseID FROM [{self.dbName}].[dbo].[flStudyCase] WHERE StudyCaseName = '{scenario}')"""
+            if self.hazard == 'tsunami':  # selecting 0 due to no return period existing in database
+                sql = f"SELECT '0' as returnPeriod FROM [{self.dbName}].[dbo].[tsScenario]"
             queryset = self.query(sql)
-            returnPeriods = list(queryset["returnPeriod"])
+            returnPeriods = [str(returnPeriod).strip() for returnPeriod in queryset['returnPeriod'].values.tolist()]
             # Check for return periods
-            if any(returnPeriods) and -1 not in returnPeriods:
-                # strip excess spaces
-                returnPeriods = [str(x).strip() for x in returnPeriods]
-                intPeriods = []
-                strPeriods = []
-                for period in returnPeriods:
-                    try:
-                        intPeriods.append(int(period))
-                    except:
-                        strPeriods.append(period)
-                if len(intPeriods) > 0:
-                    intPeriods.sort()
-                    intPeriods = [str(x) for x in intPeriods]
-                returnPeriods = intPeriods + strPeriods
             # assign as 0 if no return periods exists
+            if len(returnPeriods) == 0 or ''.join(returnPeriods) == '-1':
+                returnPeriods.append('0')
+            elif len(returnPeriods) == 1:
+                self.returnPeriod = ''.join(returnPeriods)
+                returnPeriods = self.returnPeriod
+                return returnPeriods
             else:
-                returnPeriods = '0'
-            return returnPeriods
+                return returnPeriods
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting return periods:", sys.exc_info()[0])
             raise
 
     def getEssentialFacilities(self):
@@ -1390,7 +1224,7 @@ class StudyRegion:
                 print("\nNo essential facility loss information for " +
                       self.name + '\n')
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting essential facilities:", sys.exc_info()[0])
             raise
 
     def getDemographics(self):
@@ -1419,7 +1253,7 @@ class StudyRegion:
             df = self.query(sqlDict[self.hazard])
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting demographics:", sys.exc_info()[0])
             raise
 
     def getResults(self):
@@ -1479,7 +1313,7 @@ class StudyRegion:
 
             return StudyRegionDataFrame(self, df)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting results:", sys.exc_info()[0])
             raise
 
     def getCounties(self):
@@ -1506,7 +1340,7 @@ class StudyRegion:
             gdf = gpd.GeoDataFrame(df, geometry="geometry")
             return gdf
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting counties:", sys.exc_info()[0])
             raise
 
     def getStates(self):
@@ -1529,9 +1363,8 @@ class StudyRegion:
             gdf = gpd.GeoDataFrame(df, geometry="geometry")
             return gdf
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error getting states:", sys.exc_info()[0])
             raise
-
 
     def getTravelTimeToSafety(self):
         """Creates a geodataframe of the travel time to safety
@@ -1559,7 +1392,7 @@ class StudyRegion:
                 gdf = gpd.GeoDataFrame(df, geometry="geometry")
                 return gdf
             except:
-                print("Unexpected error:", sys.exc_info()[0])
+                print("Unexpected error getting travel time to safety:", sys.exc_info()[0])
                 raise
         else:
             print("This method is only available for tsunami study regions")
