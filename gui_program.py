@@ -446,7 +446,10 @@ class App:
                 else:
                     self.studyRegion.scenario = self.value_scenario.get()
             else:
-                self.studyRegion.scenario = self.options_scenario[0]
+                if len(self.options_scenario) == 1:
+                    self.studyRegion.scenario = self.options_scenario[0]
+                else:
+                    self.studyRegion.scenario = ''
 
 
             # validates that a hazard is selected or auto-assigned
@@ -500,6 +503,14 @@ class App:
 
             return validated
         except Exception as e:
+            print('\n')
+            print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(fname)
+            print(exc_type, exc_tb.tb_lineno)
+            print('\n')
+
             print(e)
             # validation check fails
             validated = False

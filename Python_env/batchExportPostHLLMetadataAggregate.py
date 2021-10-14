@@ -17,7 +17,6 @@ How to use: Define your input folder containing hpr files and define
 
 """
 
-from hazpy import HazusPackageRegion
 from pathlib import Path
 import os
 import pandas as pd

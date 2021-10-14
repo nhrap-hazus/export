@@ -341,6 +341,7 @@ class Report:
                 facecolor="none", edgecolor="black", linewidth=0.5, ax=ax, linestyle='solid', alpha=0.7
             )
 
+
             fontsize = 3
             for idx in range(len(fig.axes)):
                 fig.axes[idx].tick_params(labelsize=fontsize, size=fontsize)
@@ -360,7 +361,6 @@ class Report:
                 facecolor=fig.get_facecolor(),
                 bbox_inches='tight',
                 dpi=600,
-                pad_inches=0
             )
             fig.clf()
             plt.clf()
@@ -418,10 +418,13 @@ class Report:
                     y2 = 640
             try:
                 self.insert_image_to_pdf(src, x1, y1, x2, y2)
-            except:
+            except Exception as e:
+                self.log_error(e)
+
                 print("Unexpected error:", sys.exc_info()[0])
                 pass
-        except:
+        except Exception as e:
+            self.log_error(e)
             print("Unexpected error:", sys.exc_info()[0])
             pass
 
@@ -512,12 +515,14 @@ class Report:
             if self.hazard != 'earthquake':
                 self.insert_image_to_pdf(src, x1, y1, x2, y2)
 
-        except:
+        except Exception as e:
+            self.log_error(e)
+        
             print("Unexpected error:", sys.exc_info()[0])
             plt.clf()
             raise
 
-    def save(self, path, deleteTemp=True, openFile=True, premade=None):
+    def save(self, path, deleteTemp=True, openFile=False, premade=None):
         """Creates a PDF of the report
 
         Keyword Arguments: \n
@@ -530,7 +535,9 @@ class Report:
             if premade is not None:
                 try:
                     self.buildPremade(path)
-                except:
+                except Exception as e:
+                    self.log_error(e)
+
                     print("Unexpected error:", sys.exc_info()[0])
 
             # open output file for writing (truncated binary)
@@ -553,7 +560,9 @@ class Report:
 
             # return False on success and True on errors
             # return pisa_status.err
-        except:
+        except Exception as e:
+            self.log_error(e)
+
             print("Unexpected error:", sys.exc_info()[0])
 
             # if premade != None:
@@ -692,7 +701,12 @@ class Report:
             data_dict (dict): [description]
             path (str): [description]
         """
-        outputPdf = path
+        try:
+            if path.split('/')[-1] == 'report_summary.pdf':
+                outputPdf = path
+        except:
+            outputPdf = os.path.join(path, 'report_summary.pdf')
+        #outputPdf = os.path.join(path, 'report_summary.pdf')
         reportTemplate = os.path.join(
             os.getcwd(), self._tempDirectory, self.hazard + '.pdf'
         )
@@ -876,7 +890,8 @@ class Report:
                         'Buildings',
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -928,7 +943,8 @@ class Report:
                     #  'total_econloss': total - Add to table
                     self.addTable(
                         economicLoss, 'Total Economic Loss', total, 'left')
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ####################################################
@@ -1024,7 +1040,8 @@ class Report:
                     self.addTable(
                         injuriesAndFatatilies, 'Injuries and Fatatilies', total, 'left'
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ################################################
@@ -1105,7 +1122,9 @@ class Report:
                         total,
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
+
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1161,7 +1180,8 @@ class Report:
                         scheme='NaturalBreaks',
                         k=4
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1236,7 +1256,8 @@ class Report:
                         classification_kwds=classification_kwds,
                         norm=Normalize(0, len(bins)),
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1285,7 +1306,8 @@ class Report:
                     eqDataDictionary['total_debris_truckloads'] = totalTruckLoads
                     self.addTable(debris, 'Debris', total, 'right')
                     self.write_fillable_pdf(eqDataDictionary, path)
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1302,7 +1324,9 @@ class Report:
                 try:
                     results = self._Report__getResults()
                     results = results.addGeometry()
-                except:
+                except Exception as e:
+                    self.log_error(e)
+
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1341,7 +1365,9 @@ class Report:
                         'Dollars (USD)',
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
+
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1389,7 +1415,9 @@ class Report:
                     floodDataDictionary['total_econloss'] = '$' + total
                     self.addTable(
                         economicLoss, 'Total Economic Loss', total, 'left')
-                except:
+                except Exception as e:
+                    self.log_error(e)
+
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1415,7 +1443,9 @@ class Report:
                         'Dollars (USD)',
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
+
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1490,7 +1520,8 @@ class Report:
                         total,
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1549,7 +1580,8 @@ class Report:
                         scheme='NaturalBreaks',
                         k=4
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1605,7 +1637,8 @@ class Report:
                         formatTicks=False,
                         cmap=color_ramp,
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1676,7 +1709,8 @@ class Report:
                     floodDataDictionary['total_debris_truckloads'] = totalTruckLoads
                     self.addTable(debris, 'Debris', total, 'right')
                     self.write_fillable_pdf(floodDataDictionary, path)
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1693,7 +1727,8 @@ class Report:
                 try:
                     results = self._Report__getResults()
                     results = results.addGeometry()
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 #######################################
@@ -1730,7 +1765,8 @@ class Report:
                         'Building Count',
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -1781,7 +1817,8 @@ class Report:
                     hurDataDictionary['total_econloss'] = '$' + total
                     self.addTable(
                         economicLoss, 'Total Economic Loss', total, 'left')
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 #######################################################
@@ -1819,7 +1856,8 @@ class Report:
                         'Total Facilities',
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1901,7 +1939,8 @@ class Report:
                         total,
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -1958,7 +1997,8 @@ class Report:
                         scheme='NaturalBreaks',
                         k=4
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2045,13 +2085,7 @@ class Report:
                         classification_kwds=classification_kwds
                     )
                 except Exception as e:
-                    print('\n')
-                    print(e)
-                    exc_type, exc_obj, exc_tb = sys.exc_info()
-                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    print(fname)
-                    print(exc_type, exc_tb.tb_lineno)
-                    print('\n')
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ###################################
@@ -2128,7 +2162,8 @@ class Report:
                     hurDataDictionary['total_debris_truckloads'] = totalTruckLoads
                     self.addTable(debris, 'Debris', total, 'right')
                     self.write_fillable_pdf(hurDataDictionary, path)
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2145,7 +2180,8 @@ class Report:
                 try:
                     results = self._Report__getResults()
                     results = results.addGeometry()
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2180,7 +2216,8 @@ class Report:
                         'Building Count',
                         'left',
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2232,7 +2269,8 @@ class Report:
                     #  'total_econloss': total - Add to table
                     self.addTable(
                         economicLoss, 'Total Economic Loss', total, 'left')
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 ####################################################
@@ -2366,7 +2404,8 @@ class Report:
                     self.addTable(
                         injuriesAndFatatilies, 'Injuries and Fatatilies', total, 'left'
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2430,7 +2469,8 @@ class Report:
                         scheme='NaturalBreaks',
                         k=4
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2460,7 +2500,8 @@ class Report:
                         cmap=color_ramp,
                         boundary=False
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
@@ -2551,11 +2592,13 @@ class Report:
                         classification_kwds=classification_kwds,
                         #norm=Normalize(0, len(bins))
                     )
-                except:
+                except Exception as e:
+                    self.log_error(e)
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
                 self.write_fillable_pdf(tsDataDictionary, path)
-        except:
+        except Exception as e:
+            self.log_error(e)
             print("Unexpected error:", sys.exc_info()[0])
             raise
 
@@ -2570,3 +2613,12 @@ class Report:
         unit = (_max - _min) / classes
         res = [_min + k * unit for k in range(classes + 1)]
         return res
+
+    def log_error(self, e):
+        print('\n')
+        print(e)
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(fname)
+        print(exc_type, exc_tb.tb_lineno)
+        print('\n')

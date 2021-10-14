@@ -26,7 +26,8 @@ def getHPRHazusVersion(hprComment):
                              ,'181818':'Hazus 4.2.1'
                              ,'191919':'Hazus 4.2.2'
                              ,'202020':'Hazus 4.2.3'
-                             ,'212121':'Hazus 5.0  '}
+                             ,'212121':'Hazus 5.0  '
+                             ,'222222':'Hazus 5.1  '}
         commentVersion = hprComment[1]
         if commentVersion in versionLookupDict:
             hprHazusVersion = versionLookupDict[commentVersion]

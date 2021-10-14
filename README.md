@@ -25,7 +25,7 @@ For questions contact fema-hazus-support@fema.dhs.gov
 
 ## To Use
 
-Follow the steps below to run FAST. To ensure .py files run when double-clicked, right-click the .py file and go to Properties. Under the "General" tab next to "Opens With", make sure "python.exe" is selected. If not, click "Change" and select "python.exe" from your Python installation directory.
+Follow the steps below to run Export. To ensure .py files run when double-clicked, right-click the .py file and go to Properties. Under the "General" tab next to "Opens With", make sure "python.exe" is selected. If not, click "Change" and select "python.exe" from your Python installation directory.
 
 **1. Download zip folder from GitHub, unzip.**
 
