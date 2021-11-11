@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import geopandas as gpd
 import sys
@@ -8,6 +7,7 @@ from shapely.geometry.polygon import Polygon
 import zipfile
 from pathlib import Path
 from osgeo import ogr
+from fnmatch import fnmatch
 
 class StudyRegionDataFrame(pd.DataFrame):
     """ -- StudyRegion helper class --
@@ -138,6 +138,8 @@ class StudyRegionDataFrame(pd.DataFrame):
             self['geometry'] = self['geometry'].apply(lambda x: loads(str(x)))
             crs = {'init' :'epsg:4326'}
             gdf = gpd.GeoDataFrame(self, geometry='geometry', crs=crs)
+            if "PARAMVALUE" in gdf.columns:
+                gdf.drop(columns="PARAMVALUE", inplace=True)
             # Separate damaged_facilities by geometry type
             if path.split('/')[-1].replace('.shp', '') == 'damaged_facilities':
                 # Create points shapefile
@@ -152,7 +154,8 @@ class StudyRegionDataFrame(pd.DataFrame):
                     lines_gdf.to_file(lines_path, driver='ESRI Shapefile')
             else:
                 gdf.to_file(path, driver='ESRI Shapefile')
-        except:
+        except Exception as e:
+            print(e)
             print("Unexpected error:", sys.exc_info()[0])
             raise
 
@@ -197,6 +200,8 @@ class StudyRegionDataFrame(pd.DataFrame):
                 self = self.addGeometry()
             self['geometry'] = self['geometry'].apply(lambda x: loads(str(x)))
             gdf = gpd.GeoDataFrame(self, geometry='geometry')
+            if "PARAMVALUE" in gdf.columns:
+                gdf.drop(columns=['PARAMVALUE'], inplace=True)
             try:
                 if gdf.crs is None:
                     gdf.set_crs(in_epsg, inplace=True)
@@ -208,8 +213,26 @@ class StudyRegionDataFrame(pd.DataFrame):
             except Exception as e:
                 print('unable to project')
                 print(e)
-            gdf.to_file(path, driver='ESRI Shapefile')
-        except:
+            if "PARAMVALUE" in gdf.columns:
+                gdf.drop(columns="PARAMVALUE", inplace=True)
+            
+            # Separate damaged_facilities by geometry type
+            clean_path =  str(path)
+            if clean_path.split('\\')[-1].replace('.shp', '') == 'damaged_facilities':
+                # Create points shapefile
+                points_gdf = gdf[gdf['geometry'].geom_type == 'Point']
+                if not points_gdf.empty:
+                    points_path = clean_path.replace('.shp', '_points.shp')
+                    points_gdf.to_file(points_path, driver='ESRI Shapefile')
+                # Create lines shapefile
+                lines_gdf = gdf[gdf['geometry'].geom_type == 'LineString']
+                if not lines_gdf.empty:
+                    lines_path = clean_path.replace('.shp', '_lines.shp')
+                    lines_gdf.to_file(lines_path, driver='ESRI Shapefile')
+            else:
+                gdf.to_file(path, driver='ESRI Shapefile')
+        except Exception as e:
+            print(e)
             print("Unexpected error toShapefiletoZipFile 1:", sys.exc_info()[0])
             raise
         try:
@@ -218,19 +241,27 @@ class StudyRegionDataFrame(pd.DataFrame):
             pathZip = Path.joinpath(pathObject.parent, pathObject.stem + '.zip')
             #For each shapefile suffix, see if it exists for filename from path and if so, append it to the zipfile...
             with zipfile.ZipFile(pathZip, 'a') as myzip:
-                for suffix in shapefileSuffixList:
-                    shapefileFile = Path.joinpath(pathObject.parent, pathObject.stem + suffix)
-                    if shapefileFile.exists():
-                        myzip.write(shapefileFile, shapefileFile.name)
-        except:
+                if 'damaged_facilities' in clean_path.split('\\')[-1].replace('.shp', ''):
+                    for filename in Path.iterdir(pathObject.parent):
+                        if fnmatch(filename.stem, 'damaged*') and filename.suffix in shapefileSuffixList:
+                            myzip.write(filename, filename.name)
+                else:
+                    for suffix in shapefileSuffixList:
+                        shapefileFile = Path.joinpath(pathObject.parent, pathObject.stem + suffix)
+                        if shapefileFile.exists():
+                            myzip.write(shapefileFile, shapefileFile.name)
+        except Exception as e:
+            print(e)
             print("Unexpected error toShapefiletoZipFile 2:", sys.exc_info()[0])
             raise
         try:
             #Delete the shapefile...
             driver = ogr.GetDriverByName("ESRI Shapefile")
-            if pathObject.exists():
-                 driver.DeleteDataSource(str(path))
-        except:
+            for filename in Path.iterdir(pathObject.parent):
+                if filename.suffix == '.shp':
+                    driver.DeleteDataSource(str(filename))
+        except Exception as e:
+            print(e)
             print("Unexpected error toShapefiletoZipFile 3:", sys.exc_info()[0])
             raise
 

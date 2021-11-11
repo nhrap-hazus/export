@@ -1,52 +1,54 @@
-#import os
 import win32com.client as win32
 
 
 def draftEmail(studyRegion):
     def abbreviateValue(number):
         try:
-            digits = 0
-            number = float(number)
-            formattedString = str("{:,}".format(round(number, digits)))
-            if ('.' in formattedString) and (digits == 0):
-                formattedString = formattedString.split('.')[0]
-            if (number > 1000) and (number < 1000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' K'
-            if (number > 1000000) and (number < 1000000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' M'
-            if (number > 1000000000) and (number < 1000000000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' B'
-            if (number > 1000000000000) and (number < 1000000000000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' T'
-            return formattedString
+            num = float('{:.3g}'.format(number))
+            magnitude = 0
+            while abs(num) >= 1000:
+                magnitude += 1
+                num /= 1000.0
+            formatted_number = '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+            return formatted_number
         except:
             return str(number)
 
     def addCommas(number, abbreviate=False, truncate=False):
-        if truncate:
-            number = int(round(number))
-        if abbreviate:
-            number = abbreviateValue(number)
+        if int(number) >= 10:
+            if truncate:
+                number = int(round(number))
+            if abbreviate:
+                number = abbreviateValue(number)
+            else:
+                number = "{:,}".format(number)
         else:
-            number = "{:,}".format(number)
+            number = ' < 10'
         return number
 
     def toDollars(number, abbreviate=False, truncate=False):
-        if truncate:
-            number = int(round(number))
-        if abbreviate:
-            dollars = abbreviateValue(number)
-            dollars = '$' + dollars
+        if int(number) >= 1000:
+            if truncate:
+                number = int(round(number))
+            if abbreviate:
+                dollars = abbreviateValue(number)
+                dollars = '$' + dollars
+            else:
+                dollars = '$'+"{:,}".format(number)
+                dollarsSplit = dollars.split('.')
+                if len(dollarsSplit) > 1:
+                    dollars = '.'.join([dollarsSplit[0], dollarsSplit[1][0:1]])
         else:
-            dollars = '$'+"{:,}".format(number)
-            dollarsSplit = dollars.split('.')
-            if len(dollarsSplit) > 1:
-                dollars = '.'.join([dollarsSplit[0], dollarsSplit[1][0:1]])
+            dollars = ' < $1k'
         return dollars
+
+    # TODO: Figure way to get advisory number
+    # def getAdvisoryNumber():
+    #     pass
+    #     sql="""SELECT huScenarioName as scenario FROM syHazus.dbo.huScenario"""
+    #     queryset = studyRegion.query(sql)
+    #     advisory_number = queryset
+    #     return advisory_number
 
     def getResidentalDamageCounts():
         sql="""select p.tract, affected * RESI as affected, minor * RESI as minor, major * RESI as major, destroyed * RESI as destroyed from 
@@ -61,8 +63,8 @@ def draftEmail(studyRegion):
         qs_counties = queryset.addCounties()
         return qs_counties
 
+# TODO: put placeholder back for Hurricane name
     def createDraftEmail(HTML='', subject='Hazus Wind Loss Modeling – Hurricane [HURRICANE_NAME] for Advisory [ADVISORY_NUMBER]', recipient='', send=False):
-
         if len(HTML) == 0:
             results = studyRegion.getResults()
             residential = getResidentalDamageCounts()
@@ -77,6 +79,7 @@ def draftEmail(studyRegion):
                 # economic loss
                 total_econloss = toDollars(slice['EconLoss'].sum(), abbreviate=True)
                 econloss_df = slice_grouped.sort_values('EconLoss', ascending=False)[0:listLimit]
+                econloss_count = len(econloss_df)
                 econloss = ''
                 for row in range(len(econloss_df)):
                     county = econloss_df.index[row]
@@ -104,10 +107,10 @@ def draftEmail(studyRegion):
                 update_html = """
                     <br />
                     <br />
-                    <strong>"""+state+"""</strong>
+                    <strong><u>"""+state+"""</u></strong>
                     <ul class="results-container">
                         <ul class="results">
-                            <li>"""+total_econloss+""" in Total Economic Loss. The """+str(listLimit)+""" counties with the highest modeled economic impacts are below:</li>
+                            <li>"""+total_econloss+""" in Total Economic Loss. The """+str(econloss_count)+""" counties with the highest modeled economic impacts are below:</li>
                             <ul class="results-details">
                                 """+econloss+"""
                             </ul>

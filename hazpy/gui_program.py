@@ -4,30 +4,15 @@ import os
 import sys
 import tkinter as tk
 from time import time
-from tkinter import (
-    BOTTOM,
-    LEFT,
-    RIGHT,
-    TOP,
-    Canvas,
-    E,
-    Label,
-    N,
-    OptionMenu,
-    PhotoImage,
-    S,
-    StringVar,
-    W,
-    filedialog,
-    messagebox,
-    ttk,
-)
+from tkinter import (BOTTOM, LEFT, RIGHT, TOP, Canvas, E, Label, N, OptionMenu,
+                     PhotoImage, S, StringVar, W, filedialog, messagebox, ttk)
 from tkinter.ttk import Progressbar
-from hazpy.hazusdb import HazusDB
-from hazpy.studyregion import StudyRegion
-#from hazpy.studyregiondataframe import StudyRegionDataFrame
+
 from PIL import Image, ImageTk
-from Python_env.draftemail import draftEmail
+
+from draftemail import draftEmail
+from hazusdb import HazusDB
+from studyregion import StudyRegion
 
 
 class App:
@@ -160,7 +145,7 @@ class App:
 
             # (extra) draft email if the checkbox is selected
             try:
-                if 'opt_draftEmail' in dir(self):
+                if 'opt_draftEmail' in dir(self) and self.studyRegion.hazard.lower() == 'hurricane':
                     if self.exportOptions['draftEmail']:
                         draftEmail(self.studyRegion)
                     # return if only draftEmail is checked
@@ -176,8 +161,9 @@ class App:
                             "Complete - Draft email can be found in the draft folder of Outlook",
                         )
                         return
-            except:
-                print('unable to draft email')
+            except Exception as e:
+                print('Unable to draft email')
+                print(e)
 
             # add progress bar
             self.addWidget_progress()
@@ -192,6 +178,8 @@ class App:
                 exportOptionsCount += 3
             if self.exportOptions['report']:
                 exportOptionsCount += 2
+            # if self.exportOptions['draftEmail']:
+            #     exportOptionsCount += 1
             progressIncrement = 100 / exportOptionsCount
             progressValue = 0
 
@@ -628,7 +616,7 @@ class App:
             fg=self.starColor,
         )
         self.required_hazard.grid(
-            row=row, column=0, padx=(self.padl, 0), pady=(20, 5), sticky=W
+            row=10, column=0, padx=(self.padl, 0), pady=(20, 5), sticky=W
         )
         # # hazard label
         self.label_hazard = tk.Label(
@@ -638,8 +626,8 @@ class App:
             background=self.backgroundColor,
             fg=self.fontColor,
         )
-        self.label_hazard.grid(row=row, column=1, padx=0, pady=(20, 5), sticky=W)
-        row += 1
+        self.label_hazard.grid(row=10, column=1, padx=0, pady=(20, 5), sticky=W)
+        #row = 10
         # # hazard dropdown
         self.dropdown_hazard = ttk.Combobox(
             self.root,
@@ -648,7 +636,7 @@ class App:
             width=40,
             style='H.TCombobox',
         )
-        self.dropdown_hazard.grid(row=row, column=1, padx=(0, 0), pady=(0, 0), sticky=W)
+        self.dropdown_hazard.grid(row=11, column=1, padx=(0, 0), pady=(0, 0), sticky=W)
 
     def removeWidget_hazard(self):
         """removes the hazard dropdown widget"""
@@ -772,10 +760,25 @@ class App:
         """handles widget creation and removal and initializes the study region class based off the study region dropdown selection"""
         try:
             value = self.value_studyRegion.get()
+            # Remove draft email check button
+            if hasattr(self, 'draft_email_button'):
+                self.draft_email_button.grid_forget()
             # if a study region is selected
             if value != '':
                 # init StudyRegion class
                 self.studyRegion = StudyRegion(studyRegion=str(value))
+                # Add Draft Email checkbutton for hurricanes
+                if self.studyRegion.hazard.lower() == 'hurricane':
+                    self.opt_draftEmail = tk.IntVar(value=1)
+                    xpadl = 200
+                    self.draft_email_button = ttk.Checkbutton(
+                        self.root,
+                        text="Draft Email",
+                        variable=self.opt_draftEmail,
+                        style='BW.TCheckbutton',
+                        command=self.handle_draftEmailCheckbox,
+                    )
+                    self.draft_email_button.grid(row=8, column=1, padx=(xpadl, 0), pady=0, sticky=W)
                 # get lists of hazards, scenarios, and return periods
                 self.options_hazard = self.studyRegion.getHazardsAnalyzed()
                 self.options_scenario = self.studyRegion.getScenarios()
@@ -783,7 +786,6 @@ class App:
                     self.options_returnPeriod = self.studyRegion.getReturnPeriods()
                 else:
                     self.studyRegion.setScenario(scenario=''.join(self.options_scenario))
-                    #self.studyRegion.setScenario()
                     self.studyRegion.scenario = str(''.join(self.options_scenario))
                     self.options_returnPeriod = self.studyRegion.getReturnPeriods(scenario=self.studyRegion.scenario)
 
@@ -815,7 +817,8 @@ class App:
                     self.text_outputDirectory.insert(
                         "1.0", self.outputDirectory + '/' + self.studyRegion.name
                     )
-        except:
+        except Exception as e:
+            print(e)
             ctypes.windll.user32.MessageBoxW(
                 None,
                 u"Unable to initialize the Study Region. Please select another Study Region to continue. Error: "
@@ -831,6 +834,21 @@ class App:
         if value != '':
             # update study region class with value
             self.studyRegion.setHazard(value)
+            # Remove Draft Email check button, if exists
+            if hasattr(self, 'draft_email_button'):
+                self.draft_email_button.grid_forget()
+            # Add Draft Email check button if selected hazard is hurricane
+            if str(value).lower() == 'hurricane':
+                self.opt_draftEmail = tk.IntVar(value=1)
+                xpadl = 200
+                self.draft_email_button = ttk.Checkbutton(
+                    self.root,
+                    text="Draft Email",
+                    variable=self.opt_draftEmail,
+                    style='BW.TCheckbutton',
+                    command=self.handle_draftEmailCheckbox,
+                )
+                self.draft_email_button.grid(row=8, column=1, padx=(xpadl, 0), pady=0, sticky=W)
             print('Hazard set as ' + str(value))
 
             # get new scenario list

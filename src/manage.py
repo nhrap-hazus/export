@@ -1,3 +1,4 @@
+from pathlib import Path
 from subprocess import call, run
 
 import ctypes
@@ -10,6 +11,10 @@ import sys
 
 class Manage:
     def __init__(self):
+
+        # Set script path
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        os.chdir(parent_path)
 
         try:
             with open('./src/config.json') as configFile:
@@ -241,14 +246,14 @@ class Manage:
         try:
             socket.setdefaulttimeout(self.http_timeout)
             port = 80
-            try:
+            if os.environ['COMPUTERNAME'][0:4] != 'FEMA':
                 # try without the proxy
                 host = 'google.com'  # The remote host
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((host, port))
                 s.close()
                 return False
-            except:
+            else:
                 # try with the fema proxy
                 host = "proxy.apps.dhs.gov"  # proxy server IP
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

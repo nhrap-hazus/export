@@ -16,8 +16,12 @@ from osgeo import ogr
 from rasterio import features
 from shapely.wkt import loads
 
-from .report import Report
-from .studyregiondataframe import StudyRegionDataFrame
+try:
+    from .report import Report
+    from .studyregiondataframe import StudyRegionDataFrame
+except:
+    from report import Report
+    from studyregiondataframe import StudyRegionDataFrame
 
 #from shapely.geometry.multipolygon import MultiPolygon
 #from shapely.geometry.polygon import Polygon
@@ -745,8 +749,8 @@ class StudyRegion:
                         gdf = gpd.read_file(path)
                     except:
                         #print('Unable to use raster...defaulting to database')
-                        sql = """SELECT a.tract, PARAMVALUE, geometry FROM
-                            (SELECT [Tract] as tract ,[PGA] as PARAMVALUE FROM {s}.[dbo].[eqTract]) a
+                        sql = """SELECT a.tract, PARAMVALUE, PGA_g, geometry FROM
+                            (SELECT [Tract] as tract ,[PGA] as PARAMVALUE, [PGA] as PGA_g FROM {s}.[dbo].[eqTract]) a
                             inner join
                             (SELECT Tract as tract, Shape.STAsText() AS geometry FROM {s}.dbo.hzTract) b
                             on a.tract = b.tract""".format(s=self.name)
@@ -839,6 +843,7 @@ class StudyRegion:
                                         except:
                                             pass
                                     gdf = gpd.GeoDataFrame.from_features(geoms)
+                                    gdf["Depth_ft"] = gdf["PARAMVALUE"]
                                     gdf.crs = crs
                                     gdf.geometry = gdf.geometry.to_crs(epsg=4326)
                                     hazardDict[hazardPathDicts[idx]['name']] = gdf
@@ -895,6 +900,7 @@ class StudyRegion:
                                     df = self.query(hazardPathDict[key]['path'])
                                     if len(df) > 0:
                                         sdf = StudyRegionDataFrame(self, df)
+                                        sdf["Peak_Gust"] = sdf["PARAMVALUE"]
                                         sdf = sdf.addGeometry()
                                         sdf['geometry'] = sdf['geometry'].apply(
                                             loads)
@@ -932,6 +938,7 @@ class StudyRegion:
                             pass
                     gdf = gpd.GeoDataFrame.from_features(geoms)
                     gdf.PARAMVALUE[gdf.PARAMVALUE > 60] = 0
+                    gdf["Depth_ft"] = gdf["PARAMVALUE"]
                     gdf.crs = crs
                     gdf.geometry = gdf.geometry.to_crs(epsg=4326)
                     hazardDict['Water Depth (ft)'] = gdf
@@ -974,8 +981,8 @@ class StudyRegion:
                         gdf = gpd.read_file(path)
                     except:
                         print('unable to use raster...defaulting to database')
-                        sql = """SELECT a.tract, PARAMVALUE, geometry FROM
-                            (SELECT [Tract] as tract ,[PGA] as PARAMVALUE FROM {s}.[dbo].[eqTract]) a
+                        sql = """SELECT a.tract, PARAMVALUE, PGA_g, geometry FROM
+                            (SELECT [Tract] as tract ,[PGA] as PARAMVALUE, [PGA] as PGA_g FROM {s}.[dbo].[eqTract]) a
                             inner join
                             (SELECT Tract as tract, Shape.STAsText() AS geometry FROM {s}.dbo.hzTract) b
                             on a.tract = b.tract""".format(
@@ -1062,6 +1069,7 @@ class StudyRegion:
                                               sys.exc_info()[0])
                                         pass
                                 gdf = gpd.GeoDataFrame.from_features(geoms)
+                                gdf["Depth_ft"] = gdf["PARAMVALUE"]
                                 gdf.crs = crs
                                 gdf.geometry = gdf.geometry.to_crs(epsg=4326)
                                 hazardDict[hazardPathDicts[idx]["name"]] = gdf
@@ -1141,6 +1149,7 @@ class StudyRegion:
                                     df = self.query(hazardPathDict[key]["path"])
                                     if len(df) > 0:
                                         sdf = StudyRegionDataFrame(self, df)
+                                        sdf["Peak_Gust"] = sdf["PARAMVALUE"]
                                         sdf = sdf.addGeometry()
                                         sdf["geometry"] = sdf["geometry"].apply(
                                             loads)
@@ -1179,6 +1188,7 @@ class StudyRegion:
                     gdf = gpd.GeoDataFrame.from_features(geoms)
                     # TODO: Review this - BC
                     gdf.PARAMVALUE[gdf.PARAMVALUE > 60] = 0
+                    gdf["Depth_ft"] = gdf["PARAMVALUE"]
                     gdf.crs = crs
                     gdf.geometry = gdf.geometry.to_crs(epsg=4326)
                     hazardDict["Water Depth (ft)"] = gdf
@@ -1287,7 +1297,6 @@ class StudyRegion:
                             WHERE StudyCaseId = (SELECT StudyCaseID FROM [{self.dbName}].[dbo].[flStudyCase] WHERE StudyCaseName = '{scenario}')"""
                 if self.hazard == 'tsunami':  # selecting 0 due to no return period existing in database
                     sql = f"SELECT '0' as returnPeriod FROM [{self.dbName}].[dbo].[tsScenario]"
-            # TODO: Review this with batch export - BC
             queryset = self.query(sql)
             returnPeriods = [str(returnPeriod).strip() for returnPeriod in queryset['returnPeriod'].values.tolist()]
             # Check for return periods
@@ -1297,6 +1306,9 @@ class StudyRegion:
             elif len(returnPeriods) == 1:
                 self.returnPeriod = ''.join(returnPeriods)
                 returnPeriods = self.returnPeriod
+            else:
+                # sort the multiple return periods
+                returnPeriods = sorted(returnPeriods, key=lambda x: int(x))
             return returnPeriods
         except:
             print("Unexpected error getReturnPeriods:", sys.exc_info()[0])

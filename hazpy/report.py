@@ -13,7 +13,6 @@ import contextily as cx
 import datetime
 import fitz
 import geopandas as gpd
-import io
 import matplotlib.ticker as ticker
 import matplotlib.patheffects as pe
 import os
@@ -101,24 +100,13 @@ class Report:
             [type]: [description]
         """
         try:
-            digits = 0
-            number = float(number)
-            formattedString = str("{:,}".format(round(number, digits)))
-            if ('.' in formattedString) and (digits == 0):
-                formattedString = formattedString.split('.')[0]
-            if (number > 1000) and (number < 1000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' K'
-            if (number > 1000000) and (number < 1000000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' M'
-            if (number > 1000000000) and (number < 1000000000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' B'
-            if (number > 1000000000000) and (number < 1000000000000000):
-                split = formattedString.split(',')
-                formattedString = split[0] + '.' + split[1][0:-1] + ' T'
-            return formattedString
+            num = float('{:.3g}'.format(number))
+            magnitude = 0
+            while abs(num) >= 1000:
+                magnitude += 1
+                num /= 1000.0
+            formatted_number = '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+            return formatted_number
         except:
             return str(number)
 
@@ -480,33 +468,30 @@ class Report:
             src = os.getcwd() + '/' + self._tempDirectory + '/' + str(uuid()) + ".png"
             plt.savefig(src, pad_inches=0, bbox_inches='tight', dpi=600)
             plt.clf()
-
             if self.hazard == 'flood':
-                if title == 'Building Damage By Occupancy':
+                if title == 'Building Damage by Occupancy Type':
                     x1 = 19
                     y1 = 116
                     x2 = 297
                     y2 = 245
-                if title == 'Building Damage By Type':
+                if title == 'Building Damage by Type':
                     x1 = 19
                     y1 = 432
                     x2 = 297
                     y2 = 568
             if self.hazard == 'hurricane':
-                if title == 'Building Damage By Occupancy':
+                if title == 'Building Damage by Occupancy Type':
                     x1 = 19
                     y1 = 116
                     x2 = 297
                     y2 = 250
-                if (
-                    title == 'Damaged Essential Facilities'
-                ):
+                if title == 'Damaged Essential Facilities':
                     x1 = 19
                     y1 = 434
                     x2 = 297
                     y2 = 568
             if self.hazard == 'tsunami':
-                if title == 'Building Damage By Occupancy':
+                if title == 'Building Damage by Occupancy Type':
                     x1 = 19
                     y1 = 112
                     x2 = 297
@@ -522,7 +507,7 @@ class Report:
             plt.clf()
             raise
 
-    def save(self, path, deleteTemp=True, openFile=False, premade=None):
+    def save(self, path, deleteTemp=True, openFile=True, premade=None):
         """Creates a PDF of the report
 
         Keyword Arguments: \n
@@ -766,7 +751,7 @@ class Report:
                 ###################################
                 # Earthquake - Building Damage
                 ###################################
-                # add building damage by occupancy
+                # add Building Damage by Occupancy Type
                 try:
                     buildingDamageByOccupancy = (
                         self._Report__getBuildingDamageByOccupancy()
@@ -886,7 +871,7 @@ class Report:
                         buildingDamageByOccupancy,
                         'xCol',
                         yCols,
-                        'Building Damage By Occupancy',
+                        'Building Damage by Occupancy Type',
                         'Buildings',
                         'left',
                     )
@@ -1333,7 +1318,7 @@ class Report:
                 # Flood - Building Damage
                 ###################################
                 try:
-                    # add Building Damage by occupancy
+                    # add Building Damage by Occupancy Type
                     buildingDamageByOccupancy = (
                         self._Report__getBuildingDamageByOccupancy()
                     )
@@ -1361,7 +1346,7 @@ class Report:
                         buildingDamageByOccupancy,
                         'xCol',
                         yCols,
-                        'Building Damage By Occupancy',
+                        'Building Damage by Occupancy Type',
                         'Dollars (USD)',
                         'left',
                     )
@@ -1424,7 +1409,7 @@ class Report:
                 #######################################################
                 # Flood - Building Damaged by Building Type
                 #######################################################
-                # add building damage by building type
+                # add Building Damage by building type
                 try:
                     buildingDamageByType = self._Report__getBuildingDamageByType()
                     # reorder the columns
@@ -1439,7 +1424,7 @@ class Report:
                         buildingDamageByType,
                         'xCol',
                         yCols,
-                        'Building Damage By Type',
+                        'Building Damage by Type',
                         'Dollars (USD)',
                         'left',
                     )
@@ -1734,7 +1719,7 @@ class Report:
                 #######################################
                 # Hurricane - Building Damage
                 #######################################
-                # add building damage by occupancy
+                # add Building Damage by Occupancy Type
                 try:
                     buildingDamageByOccupancy = (
                         self._Report__getBuildingDamageByOccupancy()
@@ -1761,7 +1746,7 @@ class Report:
                         buildingDamageByOccupancy,
                         'xCol',
                         yCols,
-                        'Building Damage By Occupancy',
+                        'Building Damage by Occupancy Type',
                         'Building Count',
                         'left',
                     )
@@ -2185,7 +2170,7 @@ class Report:
                     print("Unexpected error:", sys.exc_info()[0])
                     pass
 
-                # add building damage by occupancy
+                # add Building Damage by Occupancy Type
                 try:
                     buildingDamageByOccupancy = (
                         self._Report__getBuildingDamageByOccupancy()
@@ -2212,7 +2197,7 @@ class Report:
                         buildingDamageByOccupancy,
                         'xCol',
                         yCols,
-                        'Building Damage By Occupancy',
+                        'Building Damage by Occupancy Type',
                         'Building Count',
                         'left',
                     )
@@ -2432,25 +2417,25 @@ class Report:
                     tsDataDictionary['legend_1'] = (
                         '$'
                         + self.abbreviate(legend_item1)
-                        + ' - '
+                        + '-'
                         + self.abbreviate(legend_item2)
                     )
                     tsDataDictionary['legend_2'] = (
                         '$'
                         + self.abbreviate(legend_item2)
-                        + ' - '
+                        + '-'
                         + self.abbreviate(legend_item3)
                     )
                     tsDataDictionary['legend_3'] = (
                         '$'
                         + self.abbreviate(legend_item3)
-                        + ' - '
+                        + '-'
                         + self.abbreviate(legend_item4)
                     )
                     tsDataDictionary['legend_4'] = (
                         '$'
                         + self.abbreviate(legend_item4)
-                        + ' - '
+                        + '-'
                         + self.abbreviate(legend_item5)
                     )
                     economicLoss.geometry = economicLoss.geometry.apply(loads)
@@ -2530,54 +2515,54 @@ class Report:
                     )
 
                     breaks = nb(travelTimeToSafety['travelTimeOver65yo'], nb_class=8)
-                    tt_legend0 = breaks[0]
-                    tt_legend1 = breaks[1]
-                    tt_legend2 = breaks[2]
-                    tt_legend3 = breaks[3]
-                    tt_legend4 = breaks[4]
-                    tt_legend5 = breaks[5]
-                    tt_legend6 = breaks[6]
-                    tt_legend7 = breaks[7]
-                    tt_legend8 = breaks[8]
-                    tsDataDictionary['tt_legend0'] = (
-                        self.abbreviate(tt_legend0)
-                        + ' - '
-                        + self.abbreviate(tt_legend1)
+                    tt_legend_0 = breaks[0]
+                    tt_legend_1 = breaks[1]
+                    tt_legend_2 = breaks[2]
+                    tt_legend_3 = breaks[3]
+                    tt_legend_4 = breaks[4]
+                    tt_legend_5 = breaks[5]
+                    tt_legend_6 = breaks[6]
+                    tt_legend_7 = breaks[7]
+                    tt_legend_8 = breaks[8]
+                    tsDataDictionary['tt_legend_0'] = (
+                        self.abbreviate(tt_legend_0)
+                        + '-'
+                        + self.abbreviate(tt_legend_1)
                     )
-                    tsDataDictionary['tt_legend1'] = (
-                        self.abbreviate(tt_legend1)
-                        + ' - '
-                        + self.abbreviate(tt_legend2)
+                    tsDataDictionary['tt_legend_1'] = (
+                        self.abbreviate(tt_legend_1)
+                        + '-'
+                        + self.abbreviate(tt_legend_2)
                     )
-                    tsDataDictionary['tt_legend2'] = (
-                        self.abbreviate(tt_legend2)
-                        + ' - '
-                        + self.abbreviate(tt_legend3)
+                    tsDataDictionary['tt_legend_2'] = (
+                        self.abbreviate(tt_legend_2)
+                        + '-'
+                        + self.abbreviate(tt_legend_3)
                     )
-                    tsDataDictionary['tt_legend3'] = (
-                        self.abbreviate(tt_legend3)
-                        + ' - '
-                        + self.abbreviate(tt_legend4)
+                    tsDataDictionary['tt_legend_3'] = (
+                        self.abbreviate(tt_legend_3)
+                        + '-'
+                        + self.abbreviate(tt_legend_4)
                     )
-                    tsDataDictionary['tt_legend4'] = (
-                        self.abbreviate(tt_legend4)
-                        + ' - '
-                        + self.abbreviate(tt_legend5)
+                    tsDataDictionary['tt_legend_4'] = (
+                        self.abbreviate(tt_legend_4)
+                        + '-'
+                        + self.abbreviate(tt_legend_5)
                     )
-                    tsDataDictionary['tt_legend5'] = (
-                        self.abbreviate(tt_legend5)
-                        + ' - '
-                        + self.abbreviate(tt_legend6)
+                    tsDataDictionary['tt_legend_5'] = (
+                        self.abbreviate(tt_legend_5)
+                        + '-'
+                        + self.abbreviate(tt_legend_6)
                     )
-                    tsDataDictionary['tt_legend6'] = (
-                        self.abbreviate(tt_legend6)
-                        + ' - '
-                        + self.abbreviate(tt_legend7)
+                    tsDataDictionary['tt_legend_6'] = (
+                        self.abbreviate(tt_legend_6)
+                        + '-'
+                        + self.abbreviate(tt_legend_7)
                     )
-                    tsDataDictionary['tt_legend7'] = (
-                        self.abbreviate(tt_legend7)
-                        + ' - '
-                        + self.abbreviate(tt_legend8)
+                    tsDataDictionary['tt_legend_7'] = (
+                        self.abbreviate(tt_legend_7)
+                        + '-'
+                        + self.abbreviate(tt_legend_8)
                     )
                     bins = [round(bin) for bin in breaks[1:8]]
                     classification_kwds = {'bins': bins}
