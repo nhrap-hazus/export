@@ -4,7 +4,7 @@ The Hazus Export Tool summarizes Hazus risk assessment results stored on your de
 
 ## Requirements
 
-The Hazus Export tool requires Hazus, ArcGIS Desktop, and conda to be installed on your computer. If you haven't already, follow this [README](https://github.com/nhrap-dev/Environment-Setup/tree/update-README) to setup your machine with miniforge and conda before trying to run Export.
+The Hazus Export tool requires Hazus, ArcGIS Desktop, and conda to be installed on your computer. If you haven't already, follow this [README](https://github.com/nhrap-hazus/Environment-Setup) to setup your machine with miniforge and conda before trying to run Export.
 
 ## Documentation
 Please refer to the guide sheets in the [data-dictionaries](/data-dictionaries) folder for information about the fields, values, and units found in exported HAZUS results data.
