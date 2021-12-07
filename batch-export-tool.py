@@ -26,8 +26,4 @@ try:
 
 except Exception as e:
     print(e)
-    try:
-        input('Hit enter...')
-    except:
-        raw_input('Hit enter...')
  
