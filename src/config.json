@@ -40,8 +40,8 @@
     "httpTimeout": 5
   },
   "dev": {
-    "hazpyInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/hazpy/master/hazpy/__init__.py",
-    "repoZipfileUrl": "https://github.com/nhrap-hazus/export/archive/refs/heads/dev.zip",
+    "hazpyInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/hazpy/dev/hazpy/__init__.py",
+    "repoZipfileUrl": "https://github.com/nhrap-hazus/export/archive/dev.zip",
     "toolInitUrl": "https://raw.githubusercontent.com/nhrap-hazus/export/dev/src/__init__.py",
     "virtualEnvironment": "hazus_export_env",
     "pythonPackage": "hazpy",
