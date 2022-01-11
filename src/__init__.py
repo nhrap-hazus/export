@@ -10,5 +10,5 @@
     :author: James Raines; james.rainesii@fema.dhs.gov
 """
 
-__version__ = '2.1.7'
+__version__ = '2.1.8'
 __all__ = ['']
