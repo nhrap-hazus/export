@@ -1517,41 +1517,74 @@ class Report:
                 try:
                     economicLoss = results[['block', 'EconLoss', 'geometry']]
                     # convert to GeoDataFrame
-                    breaks = nb(results['EconLoss'], nb_class=4)
-                #    breaks = self.equal_interval(
-                   #     results['EconLoss'].to_list(), 4)
-                    legend_item1 = breaks[0]
-                    legend_item2 = breaks[1]
-                    legend_item3 = breaks[2]
-                    legend_item4 = breaks[3]
-                    legend_item5 = breaks[4]
-                    floodDataDictionary['legend_1'] = (
-                        '$'
-                        + self.abbreviate(legend_item1)
-                        + '-'
-                        + self.abbreviate(legend_item2)
-                    )
-                    floodDataDictionary['legend_2'] = (
-                        '$'
-                        + self.abbreviate(legend_item2)
-                        + '-'
-                        + self.abbreviate(legend_item3)
-                    )
-                    floodDataDictionary['legend_3'] = (
-                        '$'
-                        + self.abbreviate(legend_item3)
-                        + '-'
-                        + self.abbreviate(legend_item4)
-                    )
-                    floodDataDictionary['legend_4'] = (
-                        '$'
-                        + self.abbreviate(legend_item4)
-                        + '-'
-                        + self.abbreviate(legend_item5)
-                    )
+                    if len(economicLoss.index) >= 5:
+                        breaks = nb(results['EconLoss'], nb_class=4)
+                    #    breaks = self.equal_interval(
+                    #     results['EconLoss'].to_list(), 4)
+                        legend_item1 = breaks[0]
+                        legend_item2 = breaks[1]
+                        legend_item3 = breaks[2]
+                        legend_item4 = breaks[3]
+                        legend_item5 = breaks[4]
+                        floodDataDictionary['legend_1'] = (
+                            '$'
+                            + self.abbreviate(legend_item1)
+                            + '-'
+                            + self.abbreviate(legend_item2)
+                        )
+                        floodDataDictionary['legend_2'] = (
+                            '$'
+                            + self.abbreviate(legend_item2)
+                            + '-'
+                            + self.abbreviate(legend_item3)
+                        )
+                        floodDataDictionary['legend_3'] = (
+                            '$'
+                            + self.abbreviate(legend_item3)
+                            + '-'
+                            + self.abbreviate(legend_item4)
+                        )
+                        floodDataDictionary['legend_4'] = (
+                            '$'
+                            + self.abbreviate(legend_item4)
+                            + '-'
+                            + self.abbreviate(legend_item5)
+                        )
+                        map_colors = ['#fabfa1', '#f3694c', '#d62128', '#6b0d0d']
+                    if len(economicLoss.index) == 4:
+                        breaks = nb(results['EconLoss'], nb_class=3)
+                        legend_item1 = breaks[0]
+                        legend_item2 = breaks[1]
+                        legend_item3 = breaks[2]
+                        legend_item4 = breaks[3]
+                        floodDataDictionary['legend_1'] = ('$' + self.abbreviate(legend_item1))
+                        floodDataDictionary['legend_2'] = ('$' + self.abbreviate(legend_item2))
+                        floodDataDictionary['legend_3'] = ('$' + self.abbreviate(legend_item3))
+                        floodDataDictionary['legend_4'] = ('$' + self.abbreviate(legend_item4))
+                        map_colors = ['#fabfa1', '#f3694c', '#d62128', '#6b0d0d']
+                    if len(economicLoss.index) == 3:
+                        breaks = nb(results['EconLoss'], nb_class=2)
+                        legend_item1 = breaks[0]
+                        legend_item2 = breaks[1]
+                        legend_item3 = breaks[2]
+                        floodDataDictionary['legend_1'] = ('$' + self.abbreviate(legend_item1))
+                        floodDataDictionary['legend_2'] = ('$' + self.abbreviate(legend_item2))
+                        floodDataDictionary['legend_3'] = ('$' + self.abbreviate(legend_item3))
+                        map_colors = ['#fabfa1', '#f3694c', '#d62128']
+                    if len(economicLoss.index) == 2:
+                        column = results["EconLoss"]
+                        legend_item1 = column.min()
+                        legend_item2 = column.max()
+                        floodDataDictionary['legend_1'] = ('$' + self.abbreviate(legend_item1))
+                        floodDataDictionary['legend_2'] = ('$' + self.abbreviate(legend_item2))
+                        map_colors = ['#fabfa1', '#f3694c']
+                    if len(economicLoss.index) == 1:
+                        column = results["EconLoss"]
+                        legend_item1 = column.min()
+                        floodDataDictionary['legend_1'] = ('$' + self.abbreviate(legend_item1))
+                        map_colors = ['#fabfa1', '#f3694c'] #coloramp requires two colors
                     economicLoss.geometry = economicLoss.geometry.apply(loads)
                     gdf = gpd.GeoDataFrame(economicLoss)
-                    map_colors = ['#fabfa1', '#f3694c', '#d62128', '#6b0d0d']
                     color_ramp = LinearSegmentedColormap.from_list(
                         'color_list', [
                             Color(color).rgb for color in map_colors]
