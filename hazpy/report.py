@@ -1517,7 +1517,6 @@ class Report:
                 try:
                     economicLoss = results[['block', 'EconLoss', 'geometry']]
                     # convert to GeoDataFrame
-                    print("economicLoss count:", len(economicLoss.index))
                     if len(economicLoss.index) >= 5:
                         breaks = nb(results['EconLoss'], nb_class=4)
                     #    breaks = self.equal_interval(
