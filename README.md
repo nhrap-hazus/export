@@ -1,3 +1,5 @@
+# ATTENTION: The latest version of this tool is available at https://msc.fema.gov/portal/resources/hazus This github repository is not receiving any more updates.
+
 # Hazus Export Tool
 
 The Hazus Export Tool summarizes Hazus risk assessment results stored on your desktop Hazus database in a handful of text files, shapefiles, and a one-page graphic report. Launch the tool by double-clicking the "hazus-export-tool.py" file in the download folder.
